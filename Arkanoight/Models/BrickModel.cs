@@ -34,5 +34,25 @@
         /// Получает или задает номер ряда кирпича (для определения цвета)
         /// </summary>
         public int Row { get; set; }
+
+        /// <summary>
+        /// Получает или задает количество очков здоровья кирпича
+        /// </summary>
+        public int Health { get; set; }
+
+        /// <summary>
+        /// Получает или задает максимальное здоровье кирпича (для отображения)
+        /// </summary>
+        public int MaxHealth { get; set; }
+
+        /// <summary>
+        /// Получает или задает флаг, был ли кирпич недавно ударен (для визуального эффекта)
+        /// </summary>
+        public bool IsHit { get; set; }
+
+        /// <summary>
+        /// Получает или задает счетчик кадров после удара
+        /// </summary>
+        public int HitFrames { get; set; }
     }
 }

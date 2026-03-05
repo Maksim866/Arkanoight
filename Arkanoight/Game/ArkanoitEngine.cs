@@ -5,7 +5,7 @@ using Arkanoight.Models;
 namespace Arkanoight.Core
 {
     /// <summary>
-    /// Интерфейс игрового движка. Определяет контракт для всей игровой логики.
+    /// Интерфейс игрового движка.
     /// </summary>
     public interface IArkanoightEngine
     {
@@ -52,7 +52,6 @@ namespace Arkanoight.Core
         /// <summary>
         /// Устанавливает платформу в указанную позицию по X
         /// </summary>
-        /// <param name="x">Новая координата X для платформы</param>
         void SetPlatformPosition(int x);
 
         /// <summary>
@@ -106,7 +105,17 @@ namespace Arkanoight.Core
 
         private const int START_LIVES = 3;
         private const float PLATFORM_BOUNCE_FACTOR = 1.8f;
+        private const int HIT_EFFECT_DURATION = 5;
 
+        // Здоровье кирпичей по рядам (сверху вниз)
+        private readonly int[] BRICK_HEALTH_BY_ROW = new int[]
+        {
+            5, // Красные (верхний ряд) - 5 жизней
+            4, // Оранжевые - 4 жизни
+            3, // Желтые - 3 жизни  
+            2, // Зеленые - 2 жизни
+            1  // Синие (нижний ряд) - 1 жизнь
+        };
         /// <summary>
         /// Получает модель платформы
         /// </summary>
@@ -178,6 +187,8 @@ namespace Arkanoight.Core
 
             for (int row = 0; row < BRICK_ROWS; row++)
             {
+                int health = BRICK_HEALTH_BY_ROW[row];
+
                 for (int col = 0; col < BRICKS_PER_ROW; col++)
                 {
                     bricks.Add(new BrickModel
@@ -187,7 +198,9 @@ namespace Arkanoight.Core
                         Width = BRICK_WIDTH,
                         Height = BRICK_HEIGHT,
                         IsActive = true,
-                        Row = row
+                        Row = row,
+                        Health = health,
+                        MaxHealth = health
                     });
                 }
             }
@@ -220,6 +233,8 @@ namespace Arkanoight.Core
         public void Update()
         {
             if (gameState.IsGameOver || gameState.IsGameWon) return;
+
+            UpdateHitEffects();
 
             if (!gameState.IsBallLaunched)
             {
@@ -281,8 +296,16 @@ namespace Arkanoight.Core
             {
                 if (bricks[i].IsActive && CheckBallBrickCollision(ball, bricks[i]))
                 {
-                    bricks[i].IsActive = false;
-                    gameState.Score += BRICK_POINTS;
+                    bricks[i].Health--;
+
+                    bricks[i].IsHit = true;
+                    bricks[i].HitFrames = HIT_EFFECT_DURATION;
+
+                    if (bricks[i].Health <= 0)
+                    {
+                        bricks[i].IsActive = false;
+                        gameState.Score += BRICK_POINTS * bricks[i].MaxHealth;
+                    }
 
                     int overlapLeft = ball.X + ball.Size - bricks[i].X;
                     int overlapRight = bricks[i].X + bricks[i].Width - ball.X;
@@ -322,6 +345,23 @@ namespace Arkanoight.Core
                 gameState.IsGameWon = true;
         }
 
+        /// <summary>
+        /// Обновляет эффекты ударов (уменьшает счетчики)
+        /// </summary>
+        private void UpdateHitEffects()
+        {
+            foreach (var brick in bricks)
+            {
+                if (brick.IsHit)
+                {
+                    brick.HitFrames--;
+                    if (brick.HitFrames <= 0)
+                    {
+                        brick.IsHit = false;
+                    }
+                }
+            }
+        }
         /// <summary>
         /// Нормализует скорость мяча до базовой
         /// </summary>

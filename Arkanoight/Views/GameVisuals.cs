@@ -23,8 +23,21 @@ namespace Arkanoight.Views
 
         private static readonly Color[] BrickColors = new Color[]
         {
-            Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue
+            Color.Red,      // 0 ряд - красный (5 жизней)
+            Color.Orange,   // 1 ряд - оранжевый (4 жизни)
+            Color.Yellow,   // 2 ряд - желтый (3 жизни)
+            Color.Green,    // 3 ряд - зеленый (2 жизни)
+            Color.Blue      // 4 ряд - синий (1 жизнь)
         };
+
+        private static readonly Color[] HitBrickColors = new Color[]
+{
+            Color.FromArgb(255, 255, 150, 150), // Светло-красный
+            Color.FromArgb(255, 255, 200, 150), // Светло-оранжевый
+            Color.FromArgb(255, 255, 255, 150), // Светло-желтый
+            Color.FromArgb(255, 150, 255, 150), // Светло-зеленый
+            Color.FromArgb(255, 150, 150, 255)  // Светло-синий
+};
 
         /// <summary>
         /// Рисует всю игру
@@ -67,7 +80,7 @@ namespace Arkanoight.Views
         }
 
         /// <summary>
-        /// Рисует все кирпичи
+        /// Рисует все кирпичи с визуальными эффектами при ударе
         /// </summary>
         private static void DrawBricks(Graphics g, IReadOnlyList<BrickModel> bricks)
         {
@@ -75,13 +88,69 @@ namespace Arkanoight.Views
             {
                 if (!brick.IsActive) continue;
 
-                Color brickColor = BrickColors[brick.Row % BrickColors.Length];
+                Color brickColor;
+                if (brick.IsHit)
+                {
+                    brickColor = HitBrickColors[brick.Row % HitBrickColors.Length];
+                }
+                else
+                {
+                    brickColor = BrickColors[brick.Row % BrickColors.Length];
+                }
 
                 using (SolidBrush brush = new SolidBrush(brickColor))
                     g.FillRectangle(brush, brick.X, brick.Y, brick.Width, brick.Height);
 
                 using (Pen pen = new Pen(BrickBorderColor, 1))
                     g.DrawRectangle(pen, brick.X, brick.Y, brick.Width, brick.Height);
+
+                if (brick.Health < brick.MaxHealth && brick.Health > 0)
+                {
+                    DrawDamageIndicator(g, brick);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Рисует индикатор повреждения на кирпиче (трещины)
+        /// </summary>
+        private static void DrawDamageIndicator(Graphics g, BrickModel brick)
+        {
+            int damageLevel = brick.MaxHealth - brick.Health;
+
+            using (Pen damagePen = new Pen(Color.FromArgb(150, Color.Black), 2))
+            {
+                if (damageLevel >= 1)
+                {
+                    g.DrawLine(damagePen, brick.X + 10, brick.Y + 5,
+                              brick.X + brick.Width - 10, brick.Y + brick.Height - 5);
+                }
+
+                if (damageLevel >= 2)
+                {
+                    g.DrawLine(damagePen, brick.X + brick.Width - 10, brick.Y + 5,
+                              brick.X + 10, brick.Y + brick.Height - 5);
+                }
+
+                if (damageLevel >= 3)
+                {
+                    g.DrawLine(damagePen, brick.X + 15, brick.Y + brick.Height / 2,
+                              brick.X + brick.Width - 15, brick.Y + brick.Height / 2);
+                }
+
+                if (damageLevel >= 4)
+                {
+                    g.DrawLine(damagePen, brick.X + brick.Width / 2, brick.Y + 10,
+                              brick.X + brick.Width / 2, brick.Y + brick.Height - 10);
+                }
+
+                if (damageLevel >= 5)
+                {
+                    g.DrawLine(damagePen, brick.X + 20, brick.Y + 15,
+                              brick.X + 30, brick.Y + 25);
+                    g.DrawLine(damagePen, brick.X + brick.Width - 20, brick.Y + 15,
+                              brick.X + brick.Width - 30, brick.Y + 25);
+                }
             }
         }
 
