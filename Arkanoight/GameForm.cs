@@ -5,6 +5,9 @@ using Arkanoight.Views;
 
 namespace Arkanoight
 {
+    /// <summary>
+    /// Главная форма приложения
+    /// </summary>
     public partial class GameForm : Form
     {
         private IArkanoightEngine gameEngine;
@@ -15,6 +18,9 @@ namespace Arkanoight
         private const int WINDOW_HEIGHT = 600;
         private const int TIMER_INTERVAL = 20;
 
+        /// <summary>
+        /// Инициализирует новый экземпляр главной формы
+        /// </summary>
         public GameForm()
         {
             InitializeForm();

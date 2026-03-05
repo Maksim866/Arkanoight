@@ -29,9 +29,6 @@ namespace Arkanoight.Views
         /// <summary>
         /// Рисует всю игру
         /// </summary>
-        /// <param name="g">Объект Graphics для рисования</param>
-        /// <param name="engine">Игровой движок с данными</param>
-        /// <param name="clientSize">Размер клиентской области</param>
         public static void DrawGame(Graphics g, IArkanoightEngine engine, Size clientSize)
         {
             DrawBackground(g, clientSize);

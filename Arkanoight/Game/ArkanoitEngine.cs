@@ -87,7 +87,6 @@ namespace Arkanoight.Core
         private GameStateModel gameState;
         private Random random;
 
-        // Константы
         private const int PLATFORM_WIDTH = 100;
         private const int PLATFORM_HEIGHT = 20;
         private const int PLATFORM_Y_OFFSET = 50;
@@ -157,7 +156,6 @@ namespace Arkanoight.Core
         /// </summary>
         public void RestartGame()
         {
-            // Платформа
             platform = new PlatformModel
             {
                 X = (gameState.GameWidth - PLATFORM_WIDTH) / 2,
@@ -166,7 +164,6 @@ namespace Arkanoight.Core
                 Height = PLATFORM_HEIGHT
             };
 
-            // Мяч
             ball = new BallModel
             {
                 X = (gameState.GameWidth - BALL_SIZE) / 2,
@@ -176,7 +173,6 @@ namespace Arkanoight.Core
                 SpeedY = 0
             };
 
-            // Кирпичи
             bricks = new List<BrickModel>();
             int startX = (gameState.GameWidth - (BRICK_WIDTH * BRICKS_PER_ROW)) / 2;
 
@@ -234,7 +230,6 @@ namespace Arkanoight.Core
             ball.X += ball.SpeedX;
             ball.Y += ball.SpeedY;
 
-            // Стены
             if (ball.X <= 0)
             {
                 ball.X = 0;
@@ -252,7 +247,6 @@ namespace Arkanoight.Core
                 ball.SpeedY = Math.Abs(ball.SpeedY);
             }
 
-            // Платформа
             if (CheckBallPlatformCollision() && ball.SpeedY > 0)
             {
                 ball.Y = platform.Y - ball.Size;
@@ -283,7 +277,6 @@ namespace Arkanoight.Core
                 ball.SpeedY = -newSpeedY;
             }
 
-            // Кирпичи
             for (int i = bricks.Count - 1; i >= 0; i--)
             {
                 if (bricks[i].IsActive && CheckBallBrickCollision(ball, bricks[i]))
@@ -309,7 +302,6 @@ namespace Arkanoight.Core
                 }
             }
 
-            // Потеря мяча
             if (ball.Y > gameState.GameHeight)
             {
                 gameState.Lives--;
@@ -323,7 +315,6 @@ namespace Arkanoight.Core
                 }
             }
 
-            // Победа
             bool allDestroyed = true;
             foreach (var brick in bricks)
                 if (brick.IsActive) { allDestroyed = false; break; }
@@ -354,7 +345,6 @@ namespace Arkanoight.Core
         /// <summary>
         /// Проверяет столкновение мяча с платформой
         /// </summary>
-        /// <returns>true если есть столкновение</returns>
         private bool CheckBallPlatformCollision()
         {
             return ball.X < platform.X + platform.Width &&
@@ -366,9 +356,6 @@ namespace Arkanoight.Core
         /// <summary>
         /// Проверяет столкновение мяча с кирпичом
         /// </summary>
-        /// <param name="ball">Мяч</param>
-        /// <param name="brick">Кирпич</param>
-        /// <returns>true если есть столкновение</returns>
         private bool CheckBallBrickCollision(BallModel ball, BrickModel brick)
         {
             return ball.X < brick.X + brick.Width &&
@@ -408,7 +395,6 @@ namespace Arkanoight.Core
         /// <summary>
         /// Устанавливает платформу в указанную позицию
         /// </summary>
-        /// <param name="x">Новая координата X</param>
         public void SetPlatformPosition(int x)
         {
             int newX = x;
