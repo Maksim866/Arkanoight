@@ -3,7 +3,6 @@ using System.Windows.Forms;
 using Arkanoight.Core;
 using Arkanoight.Views;
 using Arkanoight.Models;
-using System.Collections.Generic;
 
 namespace Arkanoight
 {
@@ -129,8 +128,18 @@ namespace Arkanoight
                 // Досрочный выход - не добавляем в рекорды
                 gameEngine?.GameOver();
                 gameCanvas?.ForceRefresh();
-                gameEnded = true; // Помечаем как завершенную, но рекорд не добавляем
+                gameEnded = true;
                 Focus();
+            }
+            else if (e.KeyCode == Keys.Space)
+            {
+                // Пробел - пауза (только если мяч запущен и игра не завершена)
+                if (gameEngine != null && gameEngine.IsBallLaunched &&
+                    !gameEngine.GameState.IsGameOver && !gameEngine.GameState.IsGameWon)
+                {
+                    gameEngine.TogglePause();
+                    gameCanvas?.ForceRefresh();
+                }
             }
         }
 
@@ -138,33 +147,6 @@ namespace Arkanoight
         {
             // Сохраняем рекорды при закрытии
             ScoreManager.SaveScores();
-        }
-
-        /// <summary>
-        /// Открывает диалог для ввода имени игрока (можно вызвать при старте)
-        /// </summary>
-        private void ShowNameDialog()
-        {
-            using (var dialog = new Form())
-            {
-                dialog.Text = "Введите имя";
-                dialog.Size = new System.Drawing.Size(300, 150);
-                dialog.StartPosition = FormStartPosition.CenterParent;
-                dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-                dialog.MaximizeBox = false;
-                dialog.MinimizeBox = false;
-
-                var textBox = new TextBox { Location = new System.Drawing.Point(20, 20), Width = 240 };
-                var button = new Button { Text = "OK", Location = new System.Drawing.Point(100, 60), DialogResult = DialogResult.OK };
-
-                dialog.Controls.Add(textBox);
-                dialog.Controls.Add(button);
-
-                if (dialog.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(textBox.Text))
-                {
-                    currentPlayerName = textBox.Text;
-                }
-            }
         }
     }
 }

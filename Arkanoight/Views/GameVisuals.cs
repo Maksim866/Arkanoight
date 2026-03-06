@@ -18,7 +18,6 @@ namespace Arkanoight.Views
         private static readonly Color BallColor = Color.Yellow;
         private static readonly Color BrickBorderColor = Color.White;
         private static readonly Color TextColor = Color.White;
-        private static readonly Color HintColor = Color.FromArgb(200, Color.Yellow);
         private static readonly Color HintBgColor = Color.FromArgb(100, Color.Black);
         private static readonly Color ScoreBoardColor = Color.FromArgb(50, 50, 50);
         private static readonly Color ScoreBoardBorderColor = Color.Gold;
@@ -59,8 +58,14 @@ namespace Arkanoight.Views
             DrawPowerUps(g, engine.PowerUps);
             DrawUI(g, engine.GameState, clientSize);
 
+            // Если игра на паузе - показываем оверлей
+            if (engine.GameState.IsPaused)
+            {
+                DrawPauseOverlay(g, clientSize);
+            }
+
             // Если игра не запущена (мяч на платформе) - показываем подсказки
-            if (!engine.IsBallLaunched && !engine.GameState.IsGameOver && !engine.GameState.IsGameWon)
+            if (!engine.IsBallLaunched && !engine.GameState.IsGameOver && !engine.GameState.IsGameWon && !engine.GameState.IsPaused)
             {
                 DrawControlsHint(g, clientSize);
             }
@@ -106,45 +111,10 @@ namespace Arkanoight.Views
                 using (Pen pen = new Pen(BrickBorderColor, 1))
                     g.DrawRectangle(pen, brick.X, brick.Y, brick.Width, brick.Height);
 
-                // Если в кирпиче есть усиление, показываем маленький индикатор
-                if (brick.HasPowerUp)
-                {
-                    DrawPowerUpIndicator(g, brick);
-                }
-
                 if (brick.Health < brick.MaxHealth && brick.Health > 0)
                 {
                     DrawDamageIndicator(g, brick);
                 }
-            }
-        }
-
-        /// <summary>
-        /// Рисует индикатор усиления на кирпиче
-        /// </summary>
-        private static void DrawPowerUpIndicator(Graphics g, BrickModel brick)
-        {
-            Color indicatorColor;
-            switch (brick.PowerUpType)
-            {
-                case PowerUpType.ExtraBall:
-                    indicatorColor = Color.Cyan;
-                    break;
-                case PowerUpType.DamageBoost:
-                    indicatorColor = Color.Red;
-                    break;
-                case PowerUpType.WidePaddle:
-                    indicatorColor = Color.Green;
-                    break;
-                default:
-                    indicatorColor = Color.White;
-                    break;
-            }
-
-            // Маленький квадратик в углу кирпича
-            using (SolidBrush brush = new SolidBrush(indicatorColor))
-            {
-                g.FillRectangle(brush, brick.X + 2, brick.Y + 2, 6, 6);
             }
         }
 
@@ -188,6 +158,9 @@ namespace Arkanoight.Views
             }
         }
 
+        /// <summary>
+        /// Рисует все падающие усиления с символами
+        /// </summary>
         private static void DrawPowerUps(Graphics g, List<PowerUpModel> powerUps)
         {
             foreach (var powerUp in powerUps)
@@ -217,16 +190,19 @@ namespace Arkanoight.Views
                         break;
                 }
 
+                // Рисуем цветной квадратик
                 using (SolidBrush brush = new SolidBrush(powerUpColor))
                 {
                     g.FillRectangle(brush, powerUp.X, powerUp.Y, powerUp.Size, powerUp.Size);
                 }
 
+                // Рисуем белую рамку
                 using (Pen pen = new Pen(Color.White, 1))
                 {
                     g.DrawRectangle(pen, powerUp.X, powerUp.Y, powerUp.Size, powerUp.Size);
                 }
 
+                // Рисуем символ черным цветом
                 using (Font font = new Font("Arial", 12, FontStyle.Bold))
                 using (SolidBrush brush = new SolidBrush(Color.Black))
                 {
@@ -250,46 +226,166 @@ namespace Arkanoight.Views
         /// </summary>
         private static void DrawControlsHint(Graphics g, Size clientSize)
         {
-            int boxWidth = 400;
-            int boxHeight = 200;
+            int boxWidth = 600;
+            int boxHeight = 450;
             int boxX = (clientSize.Width - boxWidth) / 2;
-            int boxY = (clientSize.Height - boxHeight) / 2 - 50;
+            int boxY = (clientSize.Height - boxHeight) / 2 - 20;
 
             // Полупрозрачный фон
-            using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(200, 20, 20, 20)))
+            using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(230, 20, 20, 20)))
             {
                 g.FillRectangle(bgBrush, boxX, boxY, boxWidth, boxHeight);
             }
 
             // Рамка
-            using (Pen pen = new Pen(Color.Cyan, 2))
+            using (Pen pen = new Pen(Color.Cyan, 3))
             {
                 g.DrawRectangle(pen, boxX, boxY, boxWidth, boxHeight);
             }
 
             // Заголовок
-            using (Font titleFont = new Font("Arial", 18, FontStyle.Bold))
+            using (Font titleFont = new Font("Arial", 26, FontStyle.Bold))
             using (SolidBrush titleBrush = new SolidBrush(Color.Cyan))
             {
-                g.DrawString("УПРАВЛЕНИЕ", titleFont, titleBrush, boxX + 120, boxY + 15);
+                string title = "АРКАНОИД";
+                SizeF titleSize = g.MeasureString(title, titleFont);
+                float titleX = boxX + (boxWidth - titleSize.Width) / 2;
+                g.DrawString(title, titleFont, titleBrush, titleX, boxY + 25);
             }
 
-            // Подсказки
+            // Разделительная линия 1
+            using (Pen pen = new Pen(Color.Cyan, 1))
+            {
+                g.DrawLine(pen, boxX + 30, boxY + 70, boxX + boxWidth - 30, boxY + 70);
+            }
+
+            // Подзаголовок "Управление"
+            using (Font subFont = new Font("Arial", 18, FontStyle.Bold))
+            using (SolidBrush subBrush = new SolidBrush(Color.White))
+            {
+                g.DrawString("УПРАВЛЕНИЕ", subFont, subBrush, boxX + 30, boxY + 85);
+            }
+
+            // Подсказки по управлению
             using (Font font = new Font("Arial", 12, FontStyle.Regular))
             using (SolidBrush brush = new SolidBrush(Color.White))
             {
-                g.DrawString("🖱️ ЛКМ - запуск мяча", font, brush, boxX + 30, boxY + 60);
-                g.DrawString("🖱️ Движение мыши - управление платформой", font, brush, boxX + 30, boxY + 85);
-                g.DrawString("⌨️ R - перезапуск (после победы/поражения)", font, brush, boxX + 30, boxY + 110);
-                g.DrawString("⌨️ X - досрочный выход (не в рекорды)", font, brush, boxX + 30, boxY + 135);
+                g.DrawString("• ЛКМ - запуск мяча", font, brush, boxX + 50, boxY + 120);
+                g.DrawString("• Движение мыши - управление платформой", font, brush, boxX + 50, boxY + 145);
+                g.DrawString("• Пробел - пауза / продолжить", font, brush, boxX + 50, boxY + 170);
+                g.DrawString("• R - перезапуск (после победы/поражения)", font, brush, boxX + 50, boxY + 195);
             }
 
-            // Подсказка про усиления
-            using (Font powerFont = new Font("Arial", 10, FontStyle.Italic))
-            using (SolidBrush powerBrush = new SolidBrush(Color.Yellow))
+            // Разделительная линия 2
+            using (Pen pen = new Pen(Color.Cyan, 1))
             {
-                g.DrawString("⚡ Цветные квадратики в углах кирпичей показывают,", powerFont, powerBrush, boxX + 30, boxY + 165);
-                g.DrawString("какое усиление выпадет при разрушении", powerFont, powerBrush, boxX + 30, boxY + 180);
+                g.DrawLine(pen, boxX + 30, boxY + 225, boxX + boxWidth - 30, boxY + 225);
+            }
+
+            // Подзаголовок "Усиления"
+            using (Font subFont = new Font("Arial", 18, FontStyle.Bold))
+            using (SolidBrush subBrush = new SolidBrush(Color.Yellow))
+            {
+                g.DrawString("УСИЛЕНИЯ", subFont, subBrush, boxX + 30, boxY + 240);
+            }
+
+            // Рисуем квадратики усилений с символами (такие же как в игре)
+            int squareSize = 25;
+            int startY = boxY + 280;
+
+            // Голубой - дополнительный мяч (⚽)
+            using (SolidBrush colorBrush = new SolidBrush(Color.Cyan))
+            {
+                g.FillRectangle(colorBrush, boxX + 40, startY, squareSize, squareSize);
+            }
+            using (Pen pen = new Pen(Color.White, 1))
+            {
+                g.DrawRectangle(pen, boxX + 40, startY, squareSize, squareSize);
+            }
+            using (Font symbolFont = new Font("Arial", 14, FontStyle.Bold))
+            using (SolidBrush symbolBrush = new SolidBrush(Color.Black))
+            {
+                g.DrawString("⚽", symbolFont, symbolBrush, boxX + 45, startY + 2);
+            }
+
+            // Красный - увеличение урона (⚡)
+            using (SolidBrush colorBrush = new SolidBrush(Color.Red))
+            {
+                g.FillRectangle(colorBrush, boxX + 40, startY + 45, squareSize, squareSize);
+            }
+            using (Pen pen = new Pen(Color.White, 1))
+            {
+                g.DrawRectangle(pen, boxX + 40, startY + 45, squareSize, squareSize);
+            }
+            using (Font symbolFont = new Font("Arial", 14, FontStyle.Bold))
+            using (SolidBrush symbolBrush = new SolidBrush(Color.Black))
+            {
+                g.DrawString("⚡", symbolFont, symbolBrush, boxX + 47, startY + 47);
+            }
+
+            // Зеленый - широкая платформа (⬌)
+            using (SolidBrush colorBrush = new SolidBrush(Color.Green))
+            {
+                g.FillRectangle(colorBrush, boxX + 40, startY + 90, squareSize, squareSize);
+            }
+            using (Pen pen = new Pen(Color.White, 1))
+            {
+                g.DrawRectangle(pen, boxX + 40, startY + 90, squareSize, squareSize);
+            }
+            using (Font symbolFont = new Font("Arial", 14, FontStyle.Bold))
+            using (SolidBrush symbolBrush = new SolidBrush(Color.Black))
+            {
+                g.DrawString("⬌", symbolFont, symbolBrush, boxX + 45, startY + 92);
+            }
+
+            // Текстовые описания усилений
+            using (Font powerFont = new Font("Arial", 11, FontStyle.Regular))
+            using (SolidBrush textBrush = new SolidBrush(Color.White))
+            {
+                // Голубой
+                g.DrawString("Голубой ⚽ - дополнительный мяч", powerFont, textBrush, boxX + 75, startY + 5);
+                g.DrawString("(появляется на платформе)", powerFont, textBrush, boxX + 75, startY + 22);
+
+                // Красный
+                g.DrawString("Красный ⚡ - увеличение урона всех мячей на 1", powerFont, textBrush, boxX + 75, startY + 50);
+                g.DrawString("(суммируется)", powerFont, textBrush, boxX + 75, startY + 67);
+
+                // Зеленый
+                g.DrawString("Зеленый ⬌ - широкая платформа на 3 секунды", powerFont, textBrush, boxX + 75, startY + 95);
+                g.DrawString("(временный эффект)", powerFont, textBrush, boxX + 75, startY + 112);
+            }
+        }
+
+        /// <summary>
+        /// Рисует оверлей паузы
+        /// </summary>
+        private static void DrawPauseOverlay(Graphics g, Size clientSize)
+        {
+            string pauseText = "ПАУЗА";
+            string continueText = "Нажмите ПРОБЕЛ для продолжения";
+
+            // Полупрозрачный затемняющий фон
+            using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(150, 0, 0, 0)))
+            {
+                g.FillRectangle(bgBrush, 0, 0, clientSize.Width, clientSize.Height);
+            }
+
+            using (Font font = new Font("Arial", 48, FontStyle.Bold))
+            using (SolidBrush brush = new SolidBrush(Color.FromArgb(230, Color.White)))
+            {
+                SizeF textSize = g.MeasureString(pauseText, font);
+                float x = (clientSize.Width - textSize.Width) / 2;
+                float y = (clientSize.Height - textSize.Height) / 2 - 30;
+                g.DrawString(pauseText, font, brush, x, y);
+            }
+
+            using (Font font = new Font("Arial", 18, FontStyle.Regular))
+            using (SolidBrush brush = new SolidBrush(Color.FromArgb(230, Color.Yellow)))
+            {
+                SizeF textSize = g.MeasureString(continueText, font);
+                float x = (clientSize.Width - textSize.Width) / 2;
+                float y = (clientSize.Height - textSize.Height) / 2 + 30;
+                g.DrawString(continueText, font, brush, x, y);
             }
         }
 

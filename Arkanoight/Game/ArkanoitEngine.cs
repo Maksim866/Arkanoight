@@ -41,6 +41,11 @@ namespace Arkanoight.Core
         bool IsBallLaunched { get; }
 
         /// <summary>
+        /// Получает флаг паузы
+        /// </summary>
+        bool IsPaused { get; }
+
+        /// <summary>
         /// Обновляет состояние игры. Вызывается каждый кадр.
         /// </summary>
         void Update();
@@ -80,6 +85,21 @@ namespace Arkanoight.Core
         /// Принудительно завершает игру (проигрыш)
         /// </summary>
         void GameOver();
+
+        /// <summary>
+        /// Ставит игру на паузу
+        /// </summary>
+        void Pause();
+
+        /// <summary>
+        /// Возобновляет игру после паузы
+        /// </summary>
+        void Resume();
+
+        /// <summary>
+        /// Переключает паузу (вкл/выкл)
+        /// </summary>
+        void TogglePause();
     }
 
     /// <summary>
@@ -159,10 +179,12 @@ namespace Arkanoight.Core
         public bool IsBallLaunched => balls.Any(b => b.IsActive && (b.SpeedX != 0 || b.SpeedY != 0));
 
         /// <summary>
+        /// Получает флаг паузы
+        /// </summary>
+        public bool IsPaused => gameState.IsPaused;
+        /// <summary>
         /// Инициализирует новый экземпляр игрового движка
         /// </summary>
-        /// <param name="width">Ширина игрового поля</param>
-        /// <param name="height">Высота игрового поля</param>
         public ArkanoightEngine(int width, int height)
         {
             gameState = new GameStateModel
@@ -171,7 +193,8 @@ namespace Arkanoight.Core
                 GameHeight = height,
                 Lives = START_LIVES,
                 Score = 0,
-                IsBallLaunched = false
+                IsBallLaunched = false,
+                IsPaused = false
             };
             random = new Random();
             RestartGame();
@@ -290,6 +313,7 @@ namespace Arkanoight.Core
             gameState.IsGameOver = false;
             gameState.IsGameWon = false;
             gameState.IsBallLaunched = false;
+            gameState.IsPaused = false;
 
             widePaddleTimer = 0;
         }
@@ -320,7 +344,7 @@ namespace Arkanoight.Core
         /// </summary>
         public void Update()
         {
-            if (gameState.IsGameOver || gameState.IsGameWon) return;
+            if (gameState.IsGameOver || gameState.IsGameWon || gameState.IsPaused) return;
 
             UpdateHitEffects();
             UpdateWidePaddleTimer();
@@ -468,9 +492,6 @@ namespace Arkanoight.Core
         /// <summary>
         /// Создает усиление на месте разрушенного кирпича
         /// </summary>
-        /// <param name="brick">Разрушенный кирпич</param>
-        /// <param name="x">Координата X центра разрушенного кирпича</param>
-        /// <param name="y">Координата Y разрушенного кирпича</param>
         private void CreatePowerUp(BrickModel brick, int x, int y)
         {
             if (!brick.HasPowerUp) return;
@@ -524,7 +545,6 @@ namespace Arkanoight.Core
         /// <summary>
         /// Активирует усиление в зависимости от его типа
         /// </summary>
-        /// <param name="type">Тип усиления</param>
         private void ActivatePowerUp(PowerUpType type)
         {
             switch (type)
@@ -765,6 +785,33 @@ namespace Arkanoight.Core
         public void GameOver()
         {
             gameState.IsGameOver = true;
+        }
+        /// <summary>
+        /// Ставит игру на паузу
+        /// </summary>
+        public void Pause()
+        {
+            if (!gameState.IsGameOver && !gameState.IsGameWon && gameState.IsBallLaunched)
+            {
+                gameState.IsPaused = true;
+            }
+        }
+        /// <summary>
+        /// Возобновляет игру после паузы
+        /// </summary>
+        public void Resume()
+        {
+            gameState.IsPaused = false;
+        }
+        /// <summary>
+        /// Переключает паузу (вкл/выкл)
+        /// </summary>
+        public void TogglePause()
+        {
+            if (!gameState.IsGameOver && !gameState.IsGameWon && gameState.IsBallLaunched)
+            {
+                gameState.IsPaused = !gameState.IsPaused;
+            }
         }
     }
 }

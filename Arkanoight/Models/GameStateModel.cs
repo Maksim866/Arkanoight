@@ -39,5 +39,10 @@
         /// Получает или задает флаг запуска мяча (true - мяч в движении, false - на платформе)
         /// </summary>
         public bool IsBallLaunched { get; set; }
+
+        /// <summary>
+        /// Получает или задает флаг паузы (true - игра остановлена)
+        /// </summary>
+        public bool IsPaused { get; set; }
     }
 }
