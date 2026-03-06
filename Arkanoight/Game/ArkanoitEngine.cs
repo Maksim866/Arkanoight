@@ -207,17 +207,57 @@ namespace Arkanoight.Core
                 }
             };
 
-            // Кирпичи
+            // Кирпичи с усилениями
             bricks = new List<BrickModel>();
             int startX = (gameState.GameWidth - (BRICK_WIDTH * BRICKS_PER_ROW)) / 2;
 
+            // Список всех кирпичей для распределения усилений
+            List<(int row, int col)> allBricks = new List<(int row, int col)>();
+
+            for (int row = 0; row < BRICK_ROWS; row++)
+            {
+                for (int col = 0; col < BRICKS_PER_ROW; col++)
+                {
+                    allBricks.Add((row, col));
+                }
+            }
+
+            // Перемешиваем список
+            allBricks = allBricks.OrderBy(x => random.Next()).ToList();
+
+            // Определяем количество усилений (60% от всех кирпичей)
+            int powerUpCount = (int)(allBricks.Count * 0.6);
+
+            // Распределяем усиления по типам поровну
+            int extraBallCount = powerUpCount / 3;
+            int damageBoostCount = powerUpCount / 3;
+            int widePaddleCount = powerUpCount - extraBallCount - damageBoostCount;
+
+            // Создаем список усилений
+            List<PowerUpType> powerUpsToDistribute = new List<PowerUpType>();
+            for (int i = 0; i < extraBallCount; i++) powerUpsToDistribute.Add(PowerUpType.ExtraBall);
+            for (int i = 0; i < damageBoostCount; i++) powerUpsToDistribute.Add(PowerUpType.DamageBoost);
+            for (int i = 0; i < widePaddleCount; i++) powerUpsToDistribute.Add(PowerUpType.WidePaddle);
+
+            // Перемешиваем усиления
+            powerUpsToDistribute = powerUpsToDistribute.OrderBy(x => random.Next()).ToList();
+
+            // Создаем словарь для хранения усилений по позициям
+            Dictionary<(int row, int col), PowerUpType> powerUpMap = new Dictionary<(int row, int col), PowerUpType>();
+
+            for (int i = 0; i < powerUpsToDistribute.Count; i++)
+            {
+                powerUpMap[allBricks[i]] = powerUpsToDistribute[i];
+            }
+
+            // Создаем кирпичи
             for (int row = 0; row < BRICK_ROWS; row++)
             {
                 int health = BRICK_HEALTH_BY_ROW[row];
 
                 for (int col = 0; col < BRICKS_PER_ROW; col++)
                 {
-                    bricks.Add(new BrickModel
+                    var brick = new BrickModel
                     {
                         X = startX + col * BRICK_WIDTH,
                         Y = BRICK_START_Y + row * BRICK_HEIGHT,
@@ -228,8 +268,18 @@ namespace Arkanoight.Core
                         Health = health,
                         MaxHealth = health,
                         IsHit = false,
-                        HitFrames = 0
-                    });
+                        HitFrames = 0,
+                        HasPowerUp = false
+                    };
+
+                    // Проверяем, есть ли усиление для этого кирпича
+                    if (powerUpMap.ContainsKey((row, col)))
+                    {
+                        brick.HasPowerUp = true;
+                        brick.PowerUpType = powerUpMap[(row, col)];
+                    }
+
+                    bricks.Add(brick);
                 }
             }
 
@@ -348,22 +398,27 @@ namespace Arkanoight.Core
                 {
                     if (bricks[j].IsActive && CheckBallBrickCollision(balls[i], bricks[j]))
                     {
+                        // Уменьшаем здоровье кирпича на урон мяча
                         bricks[j].Health -= balls[i].Damage;
 
+                        // Активируем эффект удара
                         bricks[j].IsHit = true;
                         bricks[j].HitFrames = HIT_EFFECT_DURATION;
 
+                        // Если здоровье закончилось - кирпич разрушается
                         if (bricks[j].Health <= 0)
                         {
                             bricks[j].IsActive = false;
                             gameState.Score += BRICK_POINTS * bricks[j].MaxHealth;
 
-                            if (random.NextDouble() < 0.3)
+                            // Создаем усиление, если оно было в кирпиче
+                            if (bricks[j].HasPowerUp)
                             {
-                                CreatePowerUp(bricks[j].X + bricks[j].Width / 2, bricks[j].Y);
+                                CreatePowerUp(bricks[j], bricks[j].X + bricks[j].Width / 2, bricks[j].Y);
                             }
                         }
 
+                        // Определяем сторону столкновения для отскока
                         int overlapLeft = balls[i].X + balls[i].Size - bricks[j].X;
                         int overlapRight = bricks[j].X + bricks[j].Width - balls[i].X;
                         int overlapTop = balls[i].Y + balls[i].Size - bricks[j].Y;
@@ -381,12 +436,14 @@ namespace Arkanoight.Core
                     }
                 }
 
+                // Потеря мяча (улетел вниз)
                 if (balls[i].Y > gameState.GameHeight)
                 {
                     balls[i].IsActive = false;
                 }
             }
 
+            // Если нет активных мячей, но игра не закончена
             if (!hasActiveBall && gameState.IsBallLaunched && !gameState.IsGameOver)
             {
                 gameState.Lives--;
@@ -400,6 +457,7 @@ namespace Arkanoight.Core
                 }
             }
 
+            // Победа
             bool allDestroyed = true;
             foreach (var brick in bricks)
                 if (brick.IsActive) { allDestroyed = false; break; }
@@ -410,18 +468,19 @@ namespace Arkanoight.Core
         /// <summary>
         /// Создает усиление на месте разрушенного кирпича
         /// </summary>
+        /// <param name="brick">Разрушенный кирпич</param>
         /// <param name="x">Координата X центра разрушенного кирпича</param>
         /// <param name="y">Координата Y разрушенного кирпича</param>
-        private void CreatePowerUp(int x, int y)
+        private void CreatePowerUp(BrickModel brick, int x, int y)
         {
-            PowerUpType type = (PowerUpType)random.Next(3);
+            if (!brick.HasPowerUp) return;
 
             powerUps.Add(new PowerUpModel
             {
                 X = x - POWER_UP_SIZE / 2,
                 Y = y,
                 Size = POWER_UP_SIZE,
-                Type = type,
+                Type = brick.PowerUpType,
                 IsActive = true,
                 SpeedY = POWER_UP_SPEED
             });
@@ -440,21 +499,25 @@ namespace Arkanoight.Core
 
                 powerUp.Y += powerUp.SpeedY;
 
+                // Проверка столкновения с платформой
                 if (powerUp.Y + powerUp.Size >= platform.Y &&
                     powerUp.Y <= platform.Y + platform.Height &&
                     powerUp.X + powerUp.Size >= platform.X &&
                     powerUp.X <= platform.X + platform.Width)
                 {
+                    // Активируем усиление
                     ActivatePowerUp(powerUp.Type);
                     powerUp.IsActive = false;
                 }
 
+                // Удаляем, если улетело за экран
                 if (powerUp.Y > gameState.GameHeight)
                 {
                     powerUp.IsActive = false;
                 }
             }
 
+            // Удаляем неактивные усиления
             powerUps.RemoveAll(p => !p.IsActive);
         }
 
@@ -494,6 +557,7 @@ namespace Arkanoight.Core
                 IsActive = true
             };
 
+            // Если игра уже запущена, запускаем новый мяч сразу
             if (gameState.IsBallLaunched)
             {
                 double angle = (random.NextDouble() * 20 - 10) * Math.PI / 180;
@@ -528,6 +592,7 @@ namespace Arkanoight.Core
             platform.Width = WIDE_PADDLE_WIDTH;
             widePaddleTimer = WIDE_PADDLE_DURATION;
 
+            // Корректируем позицию, если платформа выходит за границы
             if (platform.X + platform.Width > gameState.GameWidth)
             {
                 platform.X = gameState.GameWidth - platform.Width;
@@ -547,6 +612,7 @@ namespace Arkanoight.Core
                 {
                     platform.Width = originalPlatformWidth;
 
+                    // Корректируем позицию после уменьшения
                     if (platform.X + platform.Width > gameState.GameWidth)
                     {
                         platform.X = gameState.GameWidth - platform.Width;
@@ -580,11 +646,13 @@ namespace Arkanoight.Core
         {
             gameState.IsBallLaunched = false;
 
+            // Оставляем только один мяч
             for (int i = balls.Count - 1; i > 0; i--)
             {
                 balls.RemoveAt(i);
             }
 
+            // Сбрасываем первый мяч
             balls[0].X = platform.X + platform.Width / 2 - balls[0].Size / 2;
             balls[0].Y = platform.Y - balls[0].Size - BALL_OFFSET;
             balls[0].SpeedX = 0;
@@ -592,6 +660,9 @@ namespace Arkanoight.Core
             balls[0].IsActive = true;
         }
 
+        /// <summary>
+        /// Проверяет столкновение мяча с платформой
+        /// </summary>
         private bool CheckBallPlatformCollision(BallModel ball)
         {
             return ball.X < platform.X + platform.Width &&
@@ -600,6 +671,9 @@ namespace Arkanoight.Core
                    ball.Y + ball.Size > platform.Y;
         }
 
+        /// <summary>
+        /// Проверяет столкновение мяча с кирпичом
+        /// </summary>
         private bool CheckBallBrickCollision(BallModel ball, BrickModel brick)
         {
             return ball.X < brick.X + brick.Width &&

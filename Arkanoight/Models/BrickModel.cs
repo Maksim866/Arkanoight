@@ -54,5 +54,15 @@
         /// Получает или задает счетчик кадров после удара
         /// </summary>
         public int HitFrames { get; set; }
+
+        /// <summary>
+        /// Получает или задает наличие усиления в кирпиче
+        /// </summary>
+        public bool HasPowerUp { get; set; }
+
+        /// <summary>
+        /// Получает или задает тип усиления в кирпиче
+        /// </summary>
+        public PowerUpType PowerUpType { get; set; }
     }
 }

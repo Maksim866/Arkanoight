@@ -2,6 +2,8 @@
 using System.Windows.Forms;
 using Arkanoight.Core;
 using Arkanoight.Views;
+using Arkanoight.Models;
+using System.Collections.Generic;
 
 namespace Arkanoight
 {
@@ -13,6 +15,8 @@ namespace Arkanoight
         private IArkanoightEngine gameEngine;
         private GameCanvas gameCanvas;
         private System.Windows.Forms.Timer gameTimer;
+        private bool gameEnded = false;
+        private string currentPlayerName = "Игрок";
 
         private const int WINDOW_WIDTH = 800;
         private const int WINDOW_HEIGHT = 600;
@@ -23,6 +27,9 @@ namespace Arkanoight
         /// </summary>
         public GameForm()
         {
+            // Загружаем рекорды
+            ScoreManager.LoadScores();
+
             InitializeForm();
             InitializeGame();
             Load += (s, e) => Focus();
@@ -44,6 +51,8 @@ namespace Arkanoight
                 WINDOW_WIDTH - 16,
                 WINDOW_HEIGHT - 39);
 
+            gameEnded = false;
+
             gameCanvas = new GameCanvas
             {
                 Dock = DockStyle.Fill,
@@ -61,14 +70,35 @@ namespace Arkanoight
 
             gameTimer = new System.Windows.Forms.Timer();
             gameTimer.Interval = TIMER_INTERVAL;
-            gameTimer.Tick += (s, e) =>
-            {
-                gameEngine?.Update();
-                gameCanvas?.ForceRefresh();
-            };
+            gameTimer.Tick += GameTimer_Tick;
             gameTimer.Start();
 
             KeyDown += GameForm_KeyDown;
+            FormClosing += GameForm_FormClosing;
+        }
+
+        private void GameTimer_Tick(object sender, EventArgs e)
+        {
+            gameEngine?.Update();
+
+            // Проверяем, закончилась ли игра (победа или поражение)
+            if (gameEngine != null && !gameEnded)
+            {
+                if (gameEngine.GameState.IsGameOver)
+                {
+                    gameEnded = true;
+                    // Поражение
+                    ScoreManager.AddScore(currentPlayerName, gameEngine.GameState.Score, gameEngine.GameState.Lives, "Поражение");
+                }
+                else if (gameEngine.GameState.IsGameWon)
+                {
+                    gameEnded = true;
+                    // Победа
+                    ScoreManager.AddScore(currentPlayerName, gameEngine.GameState.Score, gameEngine.GameState.Lives, "Победа");
+                }
+            }
+
+            gameCanvas?.ForceRefresh();
         }
 
         private void MovePlatform(int mouseX)
@@ -90,13 +120,50 @@ namespace Arkanoight
                 {
                     gameEngine.RestartGame();
                     gameCanvas?.ForceRefresh();
+                    gameEnded = false;
                     Focus();
                 }
             }
             else if (e.KeyCode == Keys.X)
             {
+                // Досрочный выход - не добавляем в рекорды
                 gameEngine?.GameOver();
                 gameCanvas?.ForceRefresh();
+                gameEnded = true; // Помечаем как завершенную, но рекорд не добавляем
+                Focus();
+            }
+        }
+
+        private void GameForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Сохраняем рекорды при закрытии
+            ScoreManager.SaveScores();
+        }
+
+        /// <summary>
+        /// Открывает диалог для ввода имени игрока (можно вызвать при старте)
+        /// </summary>
+        private void ShowNameDialog()
+        {
+            using (var dialog = new Form())
+            {
+                dialog.Text = "Введите имя";
+                dialog.Size = new System.Drawing.Size(300, 150);
+                dialog.StartPosition = FormStartPosition.CenterParent;
+                dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dialog.MaximizeBox = false;
+                dialog.MinimizeBox = false;
+
+                var textBox = new TextBox { Location = new System.Drawing.Point(20, 20), Width = 240 };
+                var button = new Button { Text = "OK", Location = new System.Drawing.Point(100, 60), DialogResult = DialogResult.OK };
+
+                dialog.Controls.Add(textBox);
+                dialog.Controls.Add(button);
+
+                if (dialog.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(textBox.Text))
+                {
+                    currentPlayerName = textBox.Text;
+                }
             }
         }
     }

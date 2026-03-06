@@ -20,6 +20,8 @@ namespace Arkanoight.Views
         private static readonly Color TextColor = Color.White;
         private static readonly Color HintColor = Color.FromArgb(200, Color.Yellow);
         private static readonly Color HintBgColor = Color.FromArgb(100, Color.Black);
+        private static readonly Color ScoreBoardColor = Color.FromArgb(50, 50, 50);
+        private static readonly Color ScoreBoardBorderColor = Color.Gold;
 
         private static readonly Color[] BrickColors = new Color[]
         {
@@ -42,15 +44,11 @@ namespace Arkanoight.Views
         /// <summary>
         /// Рисует всю игру
         /// </summary>
-        /// <param name="g">Объект Graphics для рисования</param>
-        /// <param name="engine">Игровой движок с данными</param>
-        /// <param name="clientSize">Размер клиентской области</param>
         public static void DrawGame(Graphics g, IArkanoightEngine engine, Size clientSize)
         {
             DrawBackground(g, clientSize);
             DrawPlatform(g, engine.Platform);
 
-            // Рисуем все мячи
             foreach (var ball in engine.Balls)
             {
                 if (ball.IsActive)
@@ -60,7 +58,18 @@ namespace Arkanoight.Views
             DrawBricks(g, engine.Bricks);
             DrawPowerUps(g, engine.PowerUps);
             DrawUI(g, engine.GameState, clientSize);
-            DrawMessages(g, engine, clientSize);
+
+            // Если игра не запущена (мяч на платформе) - показываем подсказки
+            if (!engine.IsBallLaunched && !engine.GameState.IsGameOver && !engine.GameState.IsGameWon)
+            {
+                DrawControlsHint(g, clientSize);
+            }
+
+            // Если игра завершена - показываем сообщение и таблицу рекордов
+            if (engine.GameState.IsGameOver || engine.GameState.IsGameWon)
+            {
+                DrawGameOverlay(g, engine, clientSize);
+            }
         }
 
         private static void DrawBackground(Graphics g, Size clientSize)
@@ -97,10 +106,45 @@ namespace Arkanoight.Views
                 using (Pen pen = new Pen(BrickBorderColor, 1))
                     g.DrawRectangle(pen, brick.X, brick.Y, brick.Width, brick.Height);
 
+                // Если в кирпиче есть усиление, показываем маленький индикатор
+                if (brick.HasPowerUp)
+                {
+                    DrawPowerUpIndicator(g, brick);
+                }
+
                 if (brick.Health < brick.MaxHealth && brick.Health > 0)
                 {
                     DrawDamageIndicator(g, brick);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Рисует индикатор усиления на кирпиче
+        /// </summary>
+        private static void DrawPowerUpIndicator(Graphics g, BrickModel brick)
+        {
+            Color indicatorColor;
+            switch (brick.PowerUpType)
+            {
+                case PowerUpType.ExtraBall:
+                    indicatorColor = Color.Cyan;
+                    break;
+                case PowerUpType.DamageBoost:
+                    indicatorColor = Color.Red;
+                    break;
+                case PowerUpType.WidePaddle:
+                    indicatorColor = Color.Green;
+                    break;
+                default:
+                    indicatorColor = Color.White;
+                    break;
+            }
+
+            // Маленький квадратик в углу кирпича
+            using (SolidBrush brush = new SolidBrush(indicatorColor))
+            {
+                g.FillRectangle(brush, brick.X + 2, brick.Y + 2, 6, 6);
             }
         }
 
@@ -144,11 +188,6 @@ namespace Arkanoight.Views
             }
         }
 
-        /// <summary>
-        /// Рисует все падающие усиления
-        /// </summary>
-        /// <param name="g">Объект Graphics для рисования</param>
-        /// <param name="powerUps">Список усилений</param>
         private static void DrawPowerUps(Graphics g, List<PowerUpModel> powerUps)
         {
             foreach (var powerUp in powerUps)
@@ -206,49 +245,147 @@ namespace Arkanoight.Views
             }
         }
 
-        private static void DrawMessages(Graphics g, IArkanoightEngine engine, Size clientSize)
+        /// <summary>
+        /// Рисует подсказки по управлению в центре экрана при запуске
+        /// </summary>
+        private static void DrawControlsHint(Graphics g, Size clientSize)
         {
-            if (engine.GameState.IsGameOver)
-                DrawCenteredMessage(g, "ИГРА ОКОНЧЕНА!", "Нажмите R для перезапуска", clientSize);
-            else if (engine.GameState.IsGameWon)
-                DrawCenteredMessage(g, "ВЫ ПОБЕДИЛИ!", "Нажмите R для новой игры", clientSize);
-            else if (!engine.IsBallLaunched)
-                DrawLaunchHint(g, clientSize);
-        }
+            int boxWidth = 400;
+            int boxHeight = 200;
+            int boxX = (clientSize.Width - boxWidth) / 2;
+            int boxY = (clientSize.Height - boxHeight) / 2 - 50;
 
-        private static void DrawCenteredMessage(Graphics g, string main, string sub, Size size)
-        {
-            using (Font mainFont = new Font("Arial", 24, FontStyle.Bold))
-            using (Font subFont = new Font("Arial", 16, FontStyle.Regular))
-            using (SolidBrush brush = new SolidBrush(TextColor))
+            // Полупрозрачный фон
+            using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(200, 20, 20, 20)))
             {
-                SizeF mainSize = g.MeasureString(main, mainFont);
-                SizeF subSize = g.MeasureString(sub, subFont);
+                g.FillRectangle(bgBrush, boxX, boxY, boxWidth, boxHeight);
+            }
 
-                float x = (size.Width - mainSize.Width) / 2;
-                float y = (size.Height - mainSize.Height - subSize.Height) / 2;
+            // Рамка
+            using (Pen pen = new Pen(Color.Cyan, 2))
+            {
+                g.DrawRectangle(pen, boxX, boxY, boxWidth, boxHeight);
+            }
 
-                g.DrawString(main, mainFont, brush, x, y);
-                g.DrawString(sub, subFont, brush,
-                    (size.Width - subSize.Width) / 2,
-                    y + mainSize.Height + 10);
+            // Заголовок
+            using (Font titleFont = new Font("Arial", 18, FontStyle.Bold))
+            using (SolidBrush titleBrush = new SolidBrush(Color.Cyan))
+            {
+                g.DrawString("УПРАВЛЕНИЕ", titleFont, titleBrush, boxX + 120, boxY + 15);
+            }
+
+            // Подсказки
+            using (Font font = new Font("Arial", 12, FontStyle.Regular))
+            using (SolidBrush brush = new SolidBrush(Color.White))
+            {
+                g.DrawString("🖱️ ЛКМ - запуск мяча", font, brush, boxX + 30, boxY + 60);
+                g.DrawString("🖱️ Движение мыши - управление платформой", font, brush, boxX + 30, boxY + 85);
+                g.DrawString("⌨️ R - перезапуск (после победы/поражения)", font, brush, boxX + 30, boxY + 110);
+                g.DrawString("⌨️ X - досрочный выход (не в рекорды)", font, brush, boxX + 30, boxY + 135);
+            }
+
+            // Подсказка про усиления
+            using (Font powerFont = new Font("Arial", 10, FontStyle.Italic))
+            using (SolidBrush powerBrush = new SolidBrush(Color.Yellow))
+            {
+                g.DrawString("⚡ Цветные квадратики в углах кирпичей показывают,", powerFont, powerBrush, boxX + 30, boxY + 165);
+                g.DrawString("какое усиление выпадет при разрушении", powerFont, powerBrush, boxX + 30, boxY + 180);
             }
         }
 
-        private static void DrawLaunchHint(Graphics g, Size size)
+        /// <summary>
+        /// Рисует таблицу рекордов
+        /// </summary>
+        private static void DrawScoreBoard(Graphics g, Size clientSize)
         {
-            string hint = "⚫ ЛКМ - запуск мяча | R - перезапуск";
-            using (Font font = new Font("Arial", 14, FontStyle.Italic | FontStyle.Bold))
-            using (SolidBrush brush = new SolidBrush(HintColor))
-            using (SolidBrush bgBrush = new SolidBrush(HintBgColor))
-            {
-                SizeF textSize = g.MeasureString(hint, font);
-                float x = (size.Width - textSize.Width) / 2;
-                float y = size.Height / 2 - 50;
+            var scores = ScoreManager.GetScores();
 
-                g.FillRectangle(bgBrush, x - 10, y - 5, textSize.Width + 20, textSize.Height + 10);
-                g.DrawString(hint, font, brush, x, y);
+            int boardWidth = 400;
+            int boardHeight = 280;
+            int boardX = (clientSize.Width - boardWidth) / 2;
+            int boardY = (clientSize.Height - boardHeight) / 2 + 30;
+
+            // Фон таблицы
+            using (SolidBrush bgBrush = new SolidBrush(ScoreBoardColor))
+            {
+                g.FillRectangle(bgBrush, boardX, boardY, boardWidth, boardHeight);
             }
+
+            // Рамка
+            using (Pen pen = new Pen(ScoreBoardBorderColor, 2))
+            {
+                g.DrawRectangle(pen, boardX, boardY, boardWidth, boardHeight);
+            }
+
+            // Заголовок
+            using (Font titleFont = new Font("Arial", 18, FontStyle.Bold))
+            using (SolidBrush titleBrush = new SolidBrush(ScoreBoardBorderColor))
+            {
+                g.DrawString("ТАБЛИЦА РЕКОРДОВ", titleFont, titleBrush, boardX + 80, boardY + 10);
+            }
+
+            // Заголовки колонок
+            using (Font headerFont = new Font("Arial", 11, FontStyle.Bold))
+            using (SolidBrush headerBrush = new SolidBrush(Color.White))
+            {
+                g.DrawString("№", headerFont, headerBrush, boardX + 20, boardY + 45);
+                g.DrawString("Игрок", headerFont, headerBrush, boardX + 50, boardY + 45);
+                g.DrawString("Счет", headerFont, headerBrush, boardX + 200, boardY + 45);
+                g.DrawString("Тип", headerFont, headerBrush, boardX + 280, boardY + 45);
+            }
+
+            // Разделительная линия
+            using (Pen pen = new Pen(Color.Gray))
+            {
+                g.DrawLine(pen, boardX + 10, boardY + 65, boardX + boardWidth - 10, boardY + 65);
+            }
+
+            // Список рекордов
+            if (scores.Count == 0)
+            {
+                using (Font font = new Font("Arial", 14, FontStyle.Italic))
+                using (SolidBrush brush = new SolidBrush(Color.Gray))
+                {
+                    g.DrawString("Пока нет рекордов", font, brush, boardX + 110, boardY + 120);
+                    g.DrawString("Сыграйте игру, чтобы появились результаты!", font, brush, boardX + 40, boardY + 150);
+                }
+            }
+            else
+            {
+                using (Font font = new Font("Arial", 10, FontStyle.Regular))
+                using (SolidBrush brush = new SolidBrush(Color.White))
+                {
+                    for (int i = 0; i < scores.Count; i++)
+                    {
+                        int yPos = boardY + 80 + i * 20;
+                        g.DrawString($"{i + 1}.", font, brush, boardX + 20, yPos);
+                        g.DrawString(scores[i].PlayerName, font, brush, boardX + 50, yPos);
+                        g.DrawString(scores[i].Score.ToString(), font, brush, boardX + 200, yPos);
+
+                        Color typeColor = scores[i].GameEndType == "Победа" ? Color.Gold : Color.LightCoral;
+                        using (SolidBrush typeBrush = new SolidBrush(typeColor))
+                        {
+                            g.DrawString(scores[i].GameEndType, font, typeBrush, boardX + 280, yPos);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void DrawGameOverlay(Graphics g, IArkanoightEngine engine, Size clientSize)
+        {
+            string message = engine.GameState.IsGameOver ? "ИГРА ОКОНЧЕНА!" : "ВЫ ПОБЕДИЛИ!";
+
+            using (Font mainFont = new Font("Arial", 28, FontStyle.Bold))
+            using (SolidBrush brush = new SolidBrush(engine.GameState.IsGameOver ? Color.Red : Color.Gold))
+            {
+                SizeF mainSize = g.MeasureString(message, mainFont);
+                float x = (clientSize.Width - mainSize.Width) / 2;
+                float y = 50;
+                g.DrawString(message, mainFont, brush, x, y);
+            }
+
+            DrawScoreBoard(g, clientSize);
         }
     }
 
