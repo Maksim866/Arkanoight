@@ -31,72 +31,65 @@ namespace Arkanoight.Views
         };
 
         private static readonly Color[] HitBrickColors = new Color[]
-{
-            Color.FromArgb(255, 255, 150, 150), // Светло-красный
-            Color.FromArgb(255, 255, 200, 150), // Светло-оранжевый
-            Color.FromArgb(255, 255, 255, 150), // Светло-желтый
-            Color.FromArgb(255, 150, 255, 150), // Светло-зеленый
-            Color.FromArgb(255, 150, 150, 255)  // Светло-синий
-};
+        {
+            Color.FromArgb(255, 255, 150, 150),
+            Color.FromArgb(255, 255, 200, 150),
+            Color.FromArgb(255, 255, 255, 150),
+            Color.FromArgb(255, 150, 255, 150),
+            Color.FromArgb(255, 150, 150, 255)
+        };
 
         /// <summary>
         /// Рисует всю игру
         /// </summary>
+        /// <param name="g">Объект Graphics для рисования</param>
+        /// <param name="engine">Игровой движок с данными</param>
+        /// <param name="clientSize">Размер клиентской области</param>
         public static void DrawGame(Graphics g, IArkanoightEngine engine, Size clientSize)
         {
             DrawBackground(g, clientSize);
             DrawPlatform(g, engine.Platform);
-            DrawBall(g, engine.Ball);
+
+            // Рисуем все мячи
+            foreach (var ball in engine.Balls)
+            {
+                if (ball.IsActive)
+                    DrawBall(g, ball);
+            }
+
             DrawBricks(g, engine.Bricks);
+            DrawPowerUps(g, engine.PowerUps);
             DrawUI(g, engine.GameState, clientSize);
             DrawMessages(g, engine, clientSize);
         }
 
-        /// <summary>
-        /// Рисует фон
-        /// </summary>
         private static void DrawBackground(Graphics g, Size clientSize)
         {
             using (SolidBrush brush = new SolidBrush(BackgroundColor))
                 g.FillRectangle(brush, new Rectangle(0, 0, clientSize.Width, clientSize.Height));
         }
 
-        /// <summary>
-        /// Рисует платформу
-        /// </summary>
         private static void DrawPlatform(Graphics g, PlatformModel platform)
         {
             using (SolidBrush brush = new SolidBrush(PlatformColor))
                 g.FillRectangle(brush, platform.X, platform.Y, platform.Width, platform.Height);
         }
 
-        /// <summary>
-        /// Рисует мяч
-        /// </summary>
         private static void DrawBall(Graphics g, BallModel ball)
         {
             using (SolidBrush brush = new SolidBrush(BallColor))
                 g.FillEllipse(brush, ball.X, ball.Y, ball.Size, ball.Size);
         }
 
-        /// <summary>
-        /// Рисует все кирпичи с визуальными эффектами при ударе
-        /// </summary>
         private static void DrawBricks(Graphics g, IReadOnlyList<BrickModel> bricks)
         {
             foreach (var brick in bricks)
             {
                 if (!brick.IsActive) continue;
 
-                Color brickColor;
-                if (brick.IsHit)
-                {
-                    brickColor = HitBrickColors[brick.Row % HitBrickColors.Length];
-                }
-                else
-                {
-                    brickColor = BrickColors[brick.Row % BrickColors.Length];
-                }
+                Color brickColor = brick.IsHit
+                    ? HitBrickColors[brick.Row % HitBrickColors.Length]
+                    : BrickColors[brick.Row % BrickColors.Length];
 
                 using (SolidBrush brush = new SolidBrush(brickColor))
                     g.FillRectangle(brush, brick.X, brick.Y, brick.Width, brick.Height);
@@ -111,9 +104,6 @@ namespace Arkanoight.Views
             }
         }
 
-        /// <summary>
-        /// Рисует индикатор повреждения на кирпиче (трещины)
-        /// </summary>
         private static void DrawDamageIndicator(Graphics g, BrickModel brick)
         {
             int damageLevel = brick.MaxHealth - brick.Health;
@@ -155,8 +145,57 @@ namespace Arkanoight.Views
         }
 
         /// <summary>
-        /// Рисует интерфейс (счет и жизни)
+        /// Рисует все падающие усиления
         /// </summary>
+        /// <param name="g">Объект Graphics для рисования</param>
+        /// <param name="powerUps">Список усилений</param>
+        private static void DrawPowerUps(Graphics g, List<PowerUpModel> powerUps)
+        {
+            foreach (var powerUp in powerUps)
+            {
+                if (!powerUp.IsActive) continue;
+
+                Color powerUpColor;
+                string symbol = "";
+
+                switch (powerUp.Type)
+                {
+                    case PowerUpType.ExtraBall:
+                        powerUpColor = Color.Cyan;
+                        symbol = "⚽";
+                        break;
+                    case PowerUpType.DamageBoost:
+                        powerUpColor = Color.Red;
+                        symbol = "⚡";
+                        break;
+                    case PowerUpType.WidePaddle:
+                        powerUpColor = Color.Green;
+                        symbol = "⬌";
+                        break;
+                    default:
+                        powerUpColor = Color.White;
+                        symbol = "?";
+                        break;
+                }
+
+                using (SolidBrush brush = new SolidBrush(powerUpColor))
+                {
+                    g.FillRectangle(brush, powerUp.X, powerUp.Y, powerUp.Size, powerUp.Size);
+                }
+
+                using (Pen pen = new Pen(Color.White, 1))
+                {
+                    g.DrawRectangle(pen, powerUp.X, powerUp.Y, powerUp.Size, powerUp.Size);
+                }
+
+                using (Font font = new Font("Arial", 12, FontStyle.Bold))
+                using (SolidBrush brush = new SolidBrush(Color.Black))
+                {
+                    g.DrawString(symbol, font, brush, powerUp.X + 2, powerUp.Y + 2);
+                }
+            }
+        }
+
         private static void DrawUI(Graphics g, GameStateModel gameState, Size clientSize)
         {
             using (Font font = new Font("Arial", 14, FontStyle.Bold))
@@ -167,9 +206,6 @@ namespace Arkanoight.Views
             }
         }
 
-        /// <summary>
-        /// Рисует сообщения (победа/поражение/подсказки)
-        /// </summary>
         private static void DrawMessages(Graphics g, IArkanoightEngine engine, Size clientSize)
         {
             if (engine.GameState.IsGameOver)
@@ -180,9 +216,6 @@ namespace Arkanoight.Views
                 DrawLaunchHint(g, clientSize);
         }
 
-        /// <summary>
-        /// Рисует центрированное сообщение
-        /// </summary>
         private static void DrawCenteredMessage(Graphics g, string main, string sub, Size size)
         {
             using (Font mainFont = new Font("Arial", 24, FontStyle.Bold))
@@ -202,9 +235,6 @@ namespace Arkanoight.Views
             }
         }
 
-        /// <summary>
-        /// Рисует подсказку для запуска мяча
-        /// </summary>
         private static void DrawLaunchHint(Graphics g, Size size)
         {
             string hint = "⚫ ЛКМ - запуск мяча | R - перезапуск";

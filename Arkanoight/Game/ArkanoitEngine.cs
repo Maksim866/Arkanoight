@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Arkanoight.Models;
 
 namespace Arkanoight.Core
 {
     /// <summary>
-    /// Интерфейс игрового движка.
+    /// Интерфейс игрового движка. Определяет контракт для всей игровой логики.
     /// </summary>
     public interface IArkanoightEngine
     {
@@ -15,9 +16,9 @@ namespace Arkanoight.Core
         PlatformModel Platform { get; }
 
         /// <summary>
-        /// Получает модель мяча с текущими координатами, размером и скоростью
+        /// Получает список всех активных мячей в игре
         /// </summary>
-        BallModel Ball { get; }
+        List<BallModel> Balls { get; }
 
         /// <summary>
         /// Получает текущее состояние игры (счет, жизни, флаги)
@@ -30,7 +31,12 @@ namespace Arkanoight.Core
         IReadOnlyList<BrickModel> Bricks { get; }
 
         /// <summary>
-        /// Получает флаг, указывающий, запущен ли мяч
+        /// Получает список всех падающих усилений
+        /// </summary>
+        List<PowerUpModel> PowerUps { get; }
+
+        /// <summary>
+        /// Получает флаг, указывающий, запущен ли хотя бы один мяч
         /// </summary>
         bool IsBallLaunched { get; }
 
@@ -52,10 +58,11 @@ namespace Arkanoight.Core
         /// <summary>
         /// Устанавливает платформу в указанную позицию по X
         /// </summary>
+        /// <param name="x">Новая координата X для платформы</param>
         void SetPlatformPosition(int x);
 
         /// <summary>
-        /// Запускает мяч с платформы
+        /// Запускает все мячи с платформы
         /// </summary>
         void LaunchBall();
 
@@ -65,7 +72,7 @@ namespace Arkanoight.Core
         void RestartGame();
 
         /// <summary>
-        /// Возвращает мяч на платформу после потери жизни
+        /// Возвращает все мячи на платформу после потери жизни
         /// </summary>
         void ResetBallToPlatform();
 
@@ -76,20 +83,24 @@ namespace Arkanoight.Core
     }
 
     /// <summary>
-    /// Игровой движок арканоида. Содержит всю логику игры: физику, столкновения, подсчет очков.
+    /// Игровой движок арканоида. Содержит всю логику игры: физику, столкновения, подсчет очков,
+    /// управление усилениями и дополнительными мячами.
     /// </summary>
     public class ArkanoightEngine : IArkanoightEngine
     {
         private PlatformModel platform;
-        private BallModel ball;
+        private List<BallModel> balls;
         private List<BrickModel> bricks;
+        private List<PowerUpModel> powerUps;
         private GameStateModel gameState;
         private Random random;
 
+        // Константы
         private const int PLATFORM_WIDTH = 100;
         private const int PLATFORM_HEIGHT = 20;
         private const int PLATFORM_Y_OFFSET = 50;
         private const int PLATFORM_SPEED = 10;
+        private const int PLATFORM_MAX_WIDTH = 200;
 
         private const int BALL_SIZE = 15;
         private const int BALL_SPEED = 8;
@@ -107,24 +118,25 @@ namespace Arkanoight.Core
         private const float PLATFORM_BOUNCE_FACTOR = 1.8f;
         private const int HIT_EFFECT_DURATION = 5;
 
-        // Здоровье кирпичей по рядам (сверху вниз)
-        private readonly int[] BRICK_HEALTH_BY_ROW = new int[]
-        {
-            5, // Красные (верхний ряд) - 5 жизней
-            4, // Оранжевые - 4 жизни
-            3, // Желтые - 3 жизни  
-            2, // Зеленые - 2 жизни
-            1  // Синие (нижний ряд) - 1 жизнь
-        };
+        private const int POWER_UP_SIZE = 20;
+        private const int POWER_UP_SPEED = 3;
+        private const int WIDE_PADDLE_DURATION = 180;
+        private const int WIDE_PADDLE_WIDTH = 180;
+
+        private readonly int[] BRICK_HEALTH_BY_ROW = new int[] { 5, 4, 3, 2, 1 };
+
+        private int widePaddleTimer = 0;
+        private int originalPlatformWidth;
+
         /// <summary>
         /// Получает модель платформы
         /// </summary>
         public PlatformModel Platform => platform;
 
         /// <summary>
-        /// Получает модель мяча
+        /// Получает список всех активных мячей
         /// </summary>
-        public BallModel Ball => ball;
+        public List<BallModel> Balls => balls;
 
         /// <summary>
         /// Получает состояние игры
@@ -137,9 +149,14 @@ namespace Arkanoight.Core
         public IReadOnlyList<BrickModel> Bricks => bricks.AsReadOnly();
 
         /// <summary>
-        /// Получает флаг запуска мяча
+        /// Получает список всех падающих усилений
         /// </summary>
-        public bool IsBallLaunched => gameState.IsBallLaunched;
+        public List<PowerUpModel> PowerUps => powerUps;
+
+        /// <summary>
+        /// Получает флаг, запущен ли хотя бы один мяч
+        /// </summary>
+        public bool IsBallLaunched => balls.Any(b => b.IsActive && (b.SpeedX != 0 || b.SpeedY != 0));
 
         /// <summary>
         /// Инициализирует новый экземпляр игрового движка
@@ -165,6 +182,7 @@ namespace Arkanoight.Core
         /// </summary>
         public void RestartGame()
         {
+            // Платформа
             platform = new PlatformModel
             {
                 X = (gameState.GameWidth - PLATFORM_WIDTH) / 2,
@@ -172,16 +190,24 @@ namespace Arkanoight.Core
                 Width = PLATFORM_WIDTH,
                 Height = PLATFORM_HEIGHT
             };
+            originalPlatformWidth = PLATFORM_WIDTH;
 
-            ball = new BallModel
+            // Мячи
+            balls = new List<BallModel>
             {
-                X = (gameState.GameWidth - BALL_SIZE) / 2,
-                Y = platform.Y - BALL_SIZE - BALL_OFFSET,
-                Size = BALL_SIZE,
-                SpeedX = 0,
-                SpeedY = 0
+                new BallModel
+                {
+                    X = (gameState.GameWidth - BALL_SIZE) / 2,
+                    Y = platform.Y - BALL_SIZE - BALL_OFFSET,
+                    Size = BALL_SIZE,
+                    SpeedX = 0,
+                    SpeedY = 0,
+                    Damage = 1,
+                    IsActive = true
+                }
             };
 
+            // Кирпичи
             bricks = new List<BrickModel>();
             int startX = (gameState.GameWidth - (BRICK_WIDTH * BRICKS_PER_ROW)) / 2;
 
@@ -200,30 +226,42 @@ namespace Arkanoight.Core
                         IsActive = true,
                         Row = row,
                         Health = health,
-                        MaxHealth = health
+                        MaxHealth = health,
+                        IsHit = false,
+                        HitFrames = 0
                     });
                 }
             }
+
+            powerUps = new List<PowerUpModel>();
 
             gameState.Score = 0;
             gameState.Lives = START_LIVES;
             gameState.IsGameOver = false;
             gameState.IsGameWon = false;
             gameState.IsBallLaunched = false;
+
+            widePaddleTimer = 0;
         }
 
         /// <summary>
-        /// Запускает мяч с платформы
+        /// Запускает все мячи с платформы
         /// </summary>
         public void LaunchBall()
         {
             if (!gameState.IsBallLaunched && !gameState.IsGameOver && !gameState.IsGameWon)
             {
                 gameState.IsBallLaunched = true;
-                double angle = (random.NextDouble() * 10 - 5) * Math.PI / 180;
-                ball.SpeedX = (int)(BALL_SPEED * Math.Sin(angle));
-                ball.SpeedY = -(int)(BALL_SPEED * Math.Cos(angle));
-                NormalizeBallSpeed();
+
+                foreach (var ball in balls)
+                {
+                    if (ball.IsActive && ball.SpeedX == 0 && ball.SpeedY == 0)
+                    {
+                        double angle = (random.NextDouble() * 10 - 5) * Math.PI / 180;
+                        ball.SpeedX = (int)(BALL_SPEED * Math.Sin(angle));
+                        ball.SpeedY = -(int)(BALL_SPEED * Math.Cos(angle));
+                    }
+                }
             }
         }
 
@@ -235,106 +273,130 @@ namespace Arkanoight.Core
             if (gameState.IsGameOver || gameState.IsGameWon) return;
 
             UpdateHitEffects();
+            UpdateWidePaddleTimer();
+            UpdatePowerUps();
 
-            if (!gameState.IsBallLaunched)
+            bool hasActiveBall = false;
+
+            for (int i = 0; i < balls.Count; i++)
             {
-                ball.X = platform.X + platform.Width / 2 - ball.Size / 2;
-                return;
-            }
+                if (!balls[i].IsActive) continue;
 
-            ball.X += ball.SpeedX;
-            ball.Y += ball.SpeedY;
-
-            if (ball.X <= 0)
-            {
-                ball.X = 0;
-                ball.SpeedX = Math.Abs(ball.SpeedX);
-            }
-            else if (ball.X + ball.Size >= gameState.GameWidth)
-            {
-                ball.X = gameState.GameWidth - ball.Size;
-                ball.SpeedX = -Math.Abs(ball.SpeedX);
-            }
-
-            if (ball.Y <= 0)
-            {
-                ball.Y = 0;
-                ball.SpeedY = Math.Abs(ball.SpeedY);
-            }
-
-            if (CheckBallPlatformCollision() && ball.SpeedY > 0)
-            {
-                ball.Y = platform.Y - ball.Size;
-
-                float currentSpeed = (float)Math.Sqrt(ball.SpeedX * ball.SpeedX + ball.SpeedY * ball.SpeedY);
-                if (currentSpeed < 1) currentSpeed = BALL_SPEED;
-
-                float hitPos = (float)(ball.X + ball.Size / 2 - (platform.X + platform.Width / 2)) / (platform.Width / 2);
-                hitPos = Math.Max(-1, Math.Min(1, hitPos));
-
-                int newSpeedX = (int)(currentSpeed * hitPos * PLATFORM_BOUNCE_FACTOR);
-
-                if (Math.Abs(newSpeedX) < BALL_MIN_SPEED)
+                if (!gameState.IsBallLaunched)
                 {
-                    newSpeedX = hitPos > 0 ? BALL_MIN_SPEED : -BALL_MIN_SPEED;
+                    balls[i].X = platform.X + platform.Width / 2 - balls[i].Size / 2;
+                    balls[i].Y = platform.Y - balls[i].Size - BALL_OFFSET;
+                    continue;
                 }
 
-                int newSpeedY = (int)Math.Sqrt(currentSpeed * currentSpeed - newSpeedX * newSpeedX);
+                hasActiveBall = true;
 
-                if (newSpeedY < BALL_MIN_SPEED)
+                balls[i].X += balls[i].SpeedX;
+                balls[i].Y += balls[i].SpeedY;
+
+                // Стены
+                if (balls[i].X <= 0)
                 {
-                    newSpeedY = BALL_MIN_SPEED;
-                    newSpeedX = (int)Math.Sqrt(currentSpeed * currentSpeed - newSpeedY * newSpeedY);
-                    if (hitPos < 0) newSpeedX = -newSpeedX;
+                    balls[i].X = 0;
+                    balls[i].SpeedX = Math.Abs(balls[i].SpeedX);
+                }
+                else if (balls[i].X + balls[i].Size >= gameState.GameWidth)
+                {
+                    balls[i].X = gameState.GameWidth - balls[i].Size;
+                    balls[i].SpeedX = -Math.Abs(balls[i].SpeedX);
                 }
 
-                ball.SpeedX = newSpeedX;
-                ball.SpeedY = -newSpeedY;
-            }
-
-            for (int i = bricks.Count - 1; i >= 0; i--)
-            {
-                if (bricks[i].IsActive && CheckBallBrickCollision(ball, bricks[i]))
+                if (balls[i].Y <= 0)
                 {
-                    bricks[i].Health--;
+                    balls[i].Y = 0;
+                    balls[i].SpeedY = Math.Abs(balls[i].SpeedY);
+                }
 
-                    bricks[i].IsHit = true;
-                    bricks[i].HitFrames = HIT_EFFECT_DURATION;
+                // Платформа
+                if (CheckBallPlatformCollision(balls[i]) && balls[i].SpeedY > 0)
+                {
+                    balls[i].Y = platform.Y - balls[i].Size;
 
-                    if (bricks[i].Health <= 0)
+                    float currentSpeed = (float)Math.Sqrt(balls[i].SpeedX * balls[i].SpeedX + balls[i].SpeedY * balls[i].SpeedY);
+                    if (currentSpeed < 1) currentSpeed = BALL_SPEED;
+
+                    float hitPos = (float)(balls[i].X + balls[i].Size / 2 - (platform.X + platform.Width / 2)) / (platform.Width / 2);
+                    hitPos = Math.Max(-1, Math.Min(1, hitPos));
+
+                    int newSpeedX = (int)(currentSpeed * hitPos * PLATFORM_BOUNCE_FACTOR);
+
+                    if (Math.Abs(newSpeedX) < BALL_MIN_SPEED)
                     {
-                        bricks[i].IsActive = false;
-                        gameState.Score += BRICK_POINTS * bricks[i].MaxHealth;
+                        newSpeedX = hitPos > 0 ? BALL_MIN_SPEED : -BALL_MIN_SPEED;
                     }
 
-                    int overlapLeft = ball.X + ball.Size - bricks[i].X;
-                    int overlapRight = bricks[i].X + bricks[i].Width - ball.X;
-                    int overlapTop = ball.Y + ball.Size - bricks[i].Y;
-                    int overlapBottom = bricks[i].Y + bricks[i].Height - ball.Y;
+                    int newSpeedY = (int)Math.Sqrt(currentSpeed * currentSpeed - newSpeedX * newSpeedX);
 
-                    int minOverlap = Math.Min(Math.Min(overlapLeft, overlapRight),
-                                             Math.Min(overlapTop, overlapBottom));
+                    if (newSpeedY < BALL_MIN_SPEED)
+                    {
+                        newSpeedY = BALL_MIN_SPEED;
+                        newSpeedX = (int)Math.Sqrt(currentSpeed * currentSpeed - newSpeedY * newSpeedY);
+                        if (hitPos < 0) newSpeedX = -newSpeedX;
+                    }
 
-                    if (minOverlap == overlapLeft || minOverlap == overlapRight)
-                        ball.SpeedX = -ball.SpeedX;
-                    else
-                        ball.SpeedY = -ball.SpeedY;
+                    balls[i].SpeedX = newSpeedX;
+                    balls[i].SpeedY = -newSpeedY;
+                }
 
-                    NormalizeBallSpeed();
-                    break;
+                // Кирпичи
+                for (int j = bricks.Count - 1; j >= 0; j--)
+                {
+                    if (bricks[j].IsActive && CheckBallBrickCollision(balls[i], bricks[j]))
+                    {
+                        bricks[j].Health -= balls[i].Damage;
+
+                        bricks[j].IsHit = true;
+                        bricks[j].HitFrames = HIT_EFFECT_DURATION;
+
+                        if (bricks[j].Health <= 0)
+                        {
+                            bricks[j].IsActive = false;
+                            gameState.Score += BRICK_POINTS * bricks[j].MaxHealth;
+
+                            if (random.NextDouble() < 0.3)
+                            {
+                                CreatePowerUp(bricks[j].X + bricks[j].Width / 2, bricks[j].Y);
+                            }
+                        }
+
+                        int overlapLeft = balls[i].X + balls[i].Size - bricks[j].X;
+                        int overlapRight = bricks[j].X + bricks[j].Width - balls[i].X;
+                        int overlapTop = balls[i].Y + balls[i].Size - bricks[j].Y;
+                        int overlapBottom = bricks[j].Y + bricks[j].Height - balls[i].Y;
+
+                        int minOverlap = Math.Min(Math.Min(overlapLeft, overlapRight),
+                                                 Math.Min(overlapTop, overlapBottom));
+
+                        if (minOverlap == overlapLeft || minOverlap == overlapRight)
+                            balls[i].SpeedX = -balls[i].SpeedX;
+                        else
+                            balls[i].SpeedY = -balls[i].SpeedY;
+
+                        break;
+                    }
+                }
+
+                if (balls[i].Y > gameState.GameHeight)
+                {
+                    balls[i].IsActive = false;
                 }
             }
 
-            if (ball.Y > gameState.GameHeight)
+            if (!hasActiveBall && gameState.IsBallLaunched && !gameState.IsGameOver)
             {
                 gameState.Lives--;
                 if (gameState.Lives <= 0)
+                {
                     gameState.IsGameOver = true;
+                }
                 else
                 {
-                    gameState.IsBallLaunched = false;
-                    ball.SpeedX = 0;
-                    ball.SpeedY = 0;
+                    ResetAllBallsToPlatform();
                 }
             }
 
@@ -346,7 +408,155 @@ namespace Arkanoight.Core
         }
 
         /// <summary>
-        /// Обновляет эффекты ударов (уменьшает счетчики)
+        /// Создает усиление на месте разрушенного кирпича
+        /// </summary>
+        /// <param name="x">Координата X центра разрушенного кирпича</param>
+        /// <param name="y">Координата Y разрушенного кирпича</param>
+        private void CreatePowerUp(int x, int y)
+        {
+            PowerUpType type = (PowerUpType)random.Next(3);
+
+            powerUps.Add(new PowerUpModel
+            {
+                X = x - POWER_UP_SIZE / 2,
+                Y = y,
+                Size = POWER_UP_SIZE,
+                Type = type,
+                IsActive = true,
+                SpeedY = POWER_UP_SPEED
+            });
+        }
+
+        /// <summary>
+        /// Обновляет позиции усилений и проверяет столкновение с платформой
+        /// </summary>
+        private void UpdatePowerUps()
+        {
+            for (int i = powerUps.Count - 1; i >= 0; i--)
+            {
+                var powerUp = powerUps[i];
+
+                if (!powerUp.IsActive) continue;
+
+                powerUp.Y += powerUp.SpeedY;
+
+                if (powerUp.Y + powerUp.Size >= platform.Y &&
+                    powerUp.Y <= platform.Y + platform.Height &&
+                    powerUp.X + powerUp.Size >= platform.X &&
+                    powerUp.X <= platform.X + platform.Width)
+                {
+                    ActivatePowerUp(powerUp.Type);
+                    powerUp.IsActive = false;
+                }
+
+                if (powerUp.Y > gameState.GameHeight)
+                {
+                    powerUp.IsActive = false;
+                }
+            }
+
+            powerUps.RemoveAll(p => !p.IsActive);
+        }
+
+        /// <summary>
+        /// Активирует усиление в зависимости от его типа
+        /// </summary>
+        /// <param name="type">Тип усиления</param>
+        private void ActivatePowerUp(PowerUpType type)
+        {
+            switch (type)
+            {
+                case PowerUpType.ExtraBall:
+                    AddExtraBall();
+                    break;
+                case PowerUpType.DamageBoost:
+                    IncreaseDamage();
+                    break;
+                case PowerUpType.WidePaddle:
+                    WidenPaddle();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Добавляет дополнительный мяч в игру
+        /// </summary>
+        private void AddExtraBall()
+        {
+            BallModel newBall = new BallModel
+            {
+                X = platform.X + platform.Width / 2 - BALL_SIZE / 2,
+                Y = platform.Y - BALL_SIZE - BALL_OFFSET,
+                Size = BALL_SIZE,
+                SpeedX = 0,
+                SpeedY = 0,
+                Damage = balls.Count > 0 ? balls[0].Damage : 1,
+                IsActive = true
+            };
+
+            if (gameState.IsBallLaunched)
+            {
+                double angle = (random.NextDouble() * 20 - 10) * Math.PI / 180;
+                newBall.SpeedX = (int)(BALL_SPEED * Math.Sin(angle));
+                newBall.SpeedY = -(int)(BALL_SPEED * Math.Cos(angle));
+            }
+
+            balls.Add(newBall);
+        }
+
+        /// <summary>
+        /// Увеличивает урон всех мячей на 1
+        /// </summary>
+        private void IncreaseDamage()
+        {
+            foreach (var ball in balls)
+            {
+                ball.Damage++;
+            }
+        }
+
+        /// <summary>
+        /// Увеличивает ширину платформы на 3 секунды
+        /// </summary>
+        private void WidenPaddle()
+        {
+            if (widePaddleTimer <= 0)
+            {
+                originalPlatformWidth = platform.Width;
+            }
+
+            platform.Width = WIDE_PADDLE_WIDTH;
+            widePaddleTimer = WIDE_PADDLE_DURATION;
+
+            if (platform.X + platform.Width > gameState.GameWidth)
+            {
+                platform.X = gameState.GameWidth - platform.Width;
+            }
+        }
+
+        /// <summary>
+        /// Обновляет таймер широкой платформы
+        /// </summary>
+        private void UpdateWidePaddleTimer()
+        {
+            if (widePaddleTimer > 0)
+            {
+                widePaddleTimer--;
+
+                if (widePaddleTimer <= 0)
+                {
+                    platform.Width = originalPlatformWidth;
+
+                    if (platform.X + platform.Width > gameState.GameWidth)
+                    {
+                        platform.X = gameState.GameWidth - platform.Width;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Обновляет эффекты ударов на кирпичах
         /// </summary>
         private void UpdateHitEffects()
         {
@@ -362,30 +572,27 @@ namespace Arkanoight.Core
                 }
             }
         }
+
         /// <summary>
-        /// Нормализует скорость мяча до базовой
+        /// Возвращает все мячи на платформу после потери жизни
         /// </summary>
-        private void NormalizeBallSpeed()
+        private void ResetAllBallsToPlatform()
         {
-            float currentSpeed = (float)Math.Sqrt(ball.SpeedX * ball.SpeedX + ball.SpeedY * ball.SpeedY);
+            gameState.IsBallLaunched = false;
 
-            if (currentSpeed > 0 && Math.Abs(currentSpeed - BALL_SPEED) > 0.5f)
+            for (int i = balls.Count - 1; i > 0; i--)
             {
-                float scale = BALL_SPEED / currentSpeed;
-                ball.SpeedX = (int)(ball.SpeedX * scale);
-                ball.SpeedY = (int)(ball.SpeedY * scale);
-
-                if (Math.Abs(ball.SpeedY) < 2)
-                {
-                    ball.SpeedY = ball.SpeedY < 0 ? -2 : 2;
-                }
+                balls.RemoveAt(i);
             }
+
+            balls[0].X = platform.X + platform.Width / 2 - balls[0].Size / 2;
+            balls[0].Y = platform.Y - balls[0].Size - BALL_OFFSET;
+            balls[0].SpeedX = 0;
+            balls[0].SpeedY = 0;
+            balls[0].IsActive = true;
         }
 
-        /// <summary>
-        /// Проверяет столкновение мяча с платформой
-        /// </summary>
-        private bool CheckBallPlatformCollision()
+        private bool CheckBallPlatformCollision(BallModel ball)
         {
             return ball.X < platform.X + platform.Width &&
                    ball.X + ball.Size > platform.X &&
@@ -393,9 +600,6 @@ namespace Arkanoight.Core
                    ball.Y + ball.Size > platform.Y;
         }
 
-        /// <summary>
-        /// Проверяет столкновение мяча с кирпичом
-        /// </summary>
         private bool CheckBallBrickCollision(BallModel ball, BrickModel brick)
         {
             return ball.X < brick.X + brick.Width &&
@@ -414,7 +618,15 @@ namespace Arkanoight.Core
             {
                 platform.X = newX;
                 if (!gameState.IsBallLaunched)
-                    ball.X = platform.X + platform.Width / 2 - ball.Size / 2;
+                {
+                    foreach (var ball in balls)
+                    {
+                        if (ball.IsActive && ball.SpeedX == 0 && ball.SpeedY == 0)
+                        {
+                            ball.X = platform.X + platform.Width / 2 - ball.Size / 2;
+                        }
+                    }
+                }
             }
         }
 
@@ -428,13 +640,22 @@ namespace Arkanoight.Core
             {
                 platform.X = newX;
                 if (!gameState.IsBallLaunched)
-                    ball.X = platform.X + platform.Width / 2 - ball.Size / 2;
+                {
+                    foreach (var ball in balls)
+                    {
+                        if (ball.IsActive && ball.SpeedX == 0 && ball.SpeedY == 0)
+                        {
+                            ball.X = platform.X + platform.Width / 2 - ball.Size / 2;
+                        }
+                    }
+                }
             }
         }
 
         /// <summary>
         /// Устанавливает платформу в указанную позицию
         /// </summary>
+        /// <param name="x">Новая координата X</param>
         public void SetPlatformPosition(int x)
         {
             int newX = x;
@@ -443,18 +664,25 @@ namespace Arkanoight.Core
                 newX = gameState.GameWidth - platform.Width;
 
             platform.X = newX;
+
             if (!gameState.IsBallLaunched)
-                ball.X = platform.X + platform.Width / 2 - ball.Size / 2;
+            {
+                foreach (var ball in balls)
+                {
+                    if (ball.IsActive && ball.SpeedX == 0 && ball.SpeedY == 0)
+                    {
+                        ball.X = platform.X + platform.Width / 2 - ball.Size / 2;
+                    }
+                }
+            }
         }
 
         /// <summary>
-        /// Возвращает мяч на платформу
+        /// Возвращает все мячи на платформу
         /// </summary>
         public void ResetBallToPlatform()
         {
-            gameState.IsBallLaunched = false;
-            ball.SpeedX = 0;
-            ball.SpeedY = 0;
+            ResetAllBallsToPlatform();
         }
 
         /// <summary>

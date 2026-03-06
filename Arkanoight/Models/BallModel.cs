@@ -29,5 +29,15 @@
         /// Получает или задает скорость мяча по вертикали (пикселей за кадр)
         /// </summary>
         public int SpeedY { get; set; }
+
+        /// <summary>
+        /// Получает или задает урон, который наносит мяч при попадании в кирпич
+        /// </summary>
+        public int Damage { get; set; } = 1;
+
+        /// <summary>
+        /// Получает или задает активность мяча (true - существует в игре, false - утерян)
+        /// </summary>
+        public bool IsActive { get; set; } = true;
     }
 }
