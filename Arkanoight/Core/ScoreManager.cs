@@ -7,11 +7,15 @@ using Arkanoight.Models;
 
 namespace Arkanoight.Core
 {
+    /// <summary>
+    /// Менеджер для управления таблицей рекордов
+    /// </summary>
     public static class ScoreManager
     {
         private static readonly string ScoresFilePath = "scores.json";
         private static List<ScoreRecord> scores = new List<ScoreRecord>();
 
+        /// <summary>Загружает рекорды из файла</summary>
         public static void LoadScores()
         {
             try
@@ -25,6 +29,7 @@ namespace Arkanoight.Core
             catch { }
         }
 
+        /// <summary>Сохраняет рекорды в файл</summary>
         public static void SaveScores()
         {
             try
@@ -35,6 +40,7 @@ namespace Arkanoight.Core
             catch { }
         }
 
+        /// <summary>Добавляет новый рекорд</summary>
         public static void AddScore(string name, int score, int lives, string type)
         {
             if (type == "Досрочный выход") return;
@@ -51,6 +57,8 @@ namespace Arkanoight.Core
             scores = scores.OrderByDescending(s => s.Score).Take(10).ToList();
             SaveScores();
         }
+
+        /// <summary>Получает все рекорды (отсортированные по убыванию)</summary>
         public static List<ScoreRecord> GetScores() => scores.OrderByDescending(s => s.Score).ToList();
     }
 }

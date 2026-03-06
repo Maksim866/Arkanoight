@@ -6,40 +6,54 @@ using Arkanoight.Models;
 namespace Arkanoight.Core
 {
     /// <summary>
-    /// Интерфейс игрового движка
+    /// Интерфейс игрового движка. Определяет контракт для всей игровой логики.
     /// </summary>
     public interface IArkanoightEngine
     {
-        /// <summary>Модель платформы</summary>
+        /// <summary>Получает модель платформы с текущими координатами и размерами</summary>
         PlatformModel Platform { get; }
-        /// <summary>Список всех мячей</summary>
+
+        /// <summary>Получает список всех активных мячей в игре</summary>
         List<BallModel> Balls { get; }
-        /// <summary>Состояние игры</summary>
+
+        /// <summary>Получает текущее состояние игры (счет, жизни, флаги)</summary>
         GameStateModel GameState { get; }
-        /// <summary>Список всех кирпичей</summary>
+
+        /// <summary>Получает список всех кирпичей на игровом поле</summary>
         IReadOnlyList<BrickModel> Bricks { get; }
-        /// <summary>Список падающих усилений</summary>
+
+        /// <summary>Получает список всех падающих усилений</summary>
         List<PowerUpModel> PowerUps { get; }
-        /// <summary>Запущен ли хотя бы один мяч</summary>
+
+        /// <summary>Получает флаг, указывающий, запущен ли хотя бы один мяч</summary>
         bool IsBallLaunched { get; }
-        /// <summary>На паузе ли игра</summary>
+
+        /// <summary>Получает флаг, указывающий, находится ли игра на паузе</summary>
         bool IsPaused { get; }
-        /// <summary>Обновление игровой логики</summary>
+
+        /// <summary>Обновляет состояние игры. Вызывается каждый кадр.</summary>
         void Update();
-        /// <summary>Установка позиции платформы</summary>
+
+        /// <summary>Устанавливает платформу в указанную позицию по X</summary>
+        /// <param name="x">Новая координата X для платформы</param>
         void SetPlatformPosition(int x);
-        /// <summary>Запуск мячей</summary>
+
+        /// <summary>Запускает все мячи с платформы</summary>
         void LaunchBall();
-        /// <summary>Перезапуск игры</summary>
+
+        /// <summary>Полностью перезапускает игру (начальное состояние)</summary>
         void RestartGame();
-        /// <summary>Переключение паузы</summary>
+
+        /// <summary>Переключает состояние паузы (вкл/выкл)</summary>
         void TogglePause();
-        /// <summary>Принудительное завершение игры</summary>
+
+        /// <summary>Принудительно завершает игру (проигрыш)</summary>
         void GameOver();
     }
 
     /// <summary>
-    /// Игровой движок арканоида
+    /// Игровой движок арканоида. Содержит всю логику игры: физику, столкновения, 
+    /// подсчет очков, управление усилениями и дополнительными мячами.
     /// </summary>
     public class ArkanoightEngine : IArkanoightEngine
     {
@@ -80,28 +94,28 @@ namespace Arkanoight.Core
         private int wideTimer;
         private int originalPlatformWidth;
 
-        /// <summary>Модель платформы</summary>
+        /// <summary>Получает модель платформы</summary>
         public PlatformModel Platform => platform;
 
-        /// <summary>Список всех мячей</summary>
+        /// <summary>Получает список всех активных мячей</summary>
         public List<BallModel> Balls => balls;
 
-        /// <summary>Состояние игры</summary>
+        /// <summary>Получает состояние игры</summary>
         public GameStateModel GameState => gameState;
 
-        /// <summary>Список всех кирпичей</summary>
+        /// <summary>Получает список всех кирпичей</summary>
         public IReadOnlyList<BrickModel> Bricks => bricks;
 
-        /// <summary>Список падающих усилений</summary>
+        /// <summary>Получает список всех падающих усилений</summary>
         public List<PowerUpModel> PowerUps => powerUps;
 
-        /// <summary>Запущен ли хотя бы один мяч</summary>
+        /// <summary>Получает флаг, запущен ли хотя бы один мяч</summary>
         public bool IsBallLaunched => balls.Any(b => b.IsActive && (b.SpeedX != 0 || b.SpeedY != 0));
 
-        /// <summary>На паузе ли игра</summary>
+        /// <summary>Получает флаг, указывающий, находится ли игра на паузе</summary>
         public bool IsPaused => gameState.IsPaused;
 
-        /// <summary>Конструктор движка</summary>
+        /// <summary>Инициализирует новый экземпляр игрового движка</summary>
         public ArkanoightEngine(int width, int height)
         {
             gameState = new GameStateModel
@@ -113,7 +127,7 @@ namespace Arkanoight.Core
             RestartGame();
         }
 
-        /// <summary>Перезапуск игры</summary>
+        /// <summary>Полностью перезапускает игру</summary>
         public void RestartGame()
         {
             platform = new PlatformModel
@@ -192,7 +206,7 @@ namespace Arkanoight.Core
             wideTimer = 0;
         }
 
-        /// <summary>Запуск мячей</summary>
+        /// <summary>Запускает все мячи с платформы</summary>
         public void LaunchBall()
         {
             if (!gameState.IsBallLaunched && !gameState.IsGameOver && !gameState.IsGameWon)
@@ -226,7 +240,7 @@ namespace Arkanoight.Core
                 ball.SpeedX = ball.SpeedX < 0 ? -1 : 1;
         }
 
-        /// <summary>Обновление игровой логики</summary>
+        /// <summary>Обновляет состояние игры. Вызывается каждый кадр.</summary>
         public void Update()
         {
             if (gameState.IsGameOver || gameState.IsGameWon || gameState.IsPaused) return;
@@ -438,7 +452,7 @@ namespace Arkanoight.Core
                 gameState.IsGameWon = true;
         }
 
-        /// <summary>Установка позиции платформы</summary>
+        /// <summary>Устанавливает платформу в указанную позицию</summary>
         public void SetPlatformPosition(int x)
         {
             var newX = Math.Max(0, Math.Min(x, gameState.GameWidth - platform.Width));
@@ -447,14 +461,14 @@ namespace Arkanoight.Core
                 balls[0].X = platform.X + platform.Width / 2 - balls[0].Size / 2;
         }
 
-        /// <summary>Переключение паузы</summary>
+        /// <summary>Переключает состояние паузы (вкл/выкл)</summary>
         public void TogglePause()
         {
             if (!gameState.IsGameOver && !gameState.IsGameWon && gameState.IsBallLaunched)
                 gameState.IsPaused = !gameState.IsPaused;
         }
 
-        /// <summary>Принудительное завершение игры</summary>
+        /// <summary>Принудительно завершает игру</summary>
         public void GameOver() => gameState.IsGameOver = true;
     }
 }

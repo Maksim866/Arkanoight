@@ -7,6 +7,9 @@ using Arkanoight.Models;
 
 namespace Arkanoight.Views
 {
+    /// <summary>
+    /// Класс для визуализации игры с кэшированием ресурсов
+    /// </summary>
     public static class GameVisuals
     {
         // Цвета
@@ -61,6 +64,7 @@ namespace Arkanoight.Views
         private static bool bufferDirty = true;
         private static Control targetControl;
 
+        /// <summary>Статический конструктор для инициализации массивов кистей</summary>
         static GameVisuals()
         {
             brickBrushes = new SolidBrush[BrickColors.Length];
@@ -72,6 +76,7 @@ namespace Arkanoight.Views
                 hitBrushes[i] = new SolidBrush(HitColors[i]);
         }
 
+        /// <summary>Инициализирует буфер и привязывает к контролу</summary>
         public static void Initialize(Control control, int width, int height)
         {
             targetControl = control;
@@ -86,6 +91,7 @@ namespace Arkanoight.Views
             bufferDirty = true;
         }
 
+        /// <summary>Рисует игру в буфер</summary>
         public static void DrawToBuffer(IArkanoightEngine engine, Size clientSize)
         {
             if (buffer == null) return;
@@ -161,6 +167,7 @@ namespace Arkanoight.Views
             bufferDirty = false;
         }
 
+        /// <summary>Рисует экран паузы</summary>
         private static void DrawPauseScreen(Graphics graphics, Size clientSize)
         {
             graphics.FillRectangle(pauseBgBrush, 0, 0, clientSize.Width, clientSize.Height);
@@ -172,6 +179,7 @@ namespace Arkanoight.Views
                 clientSize.Height / 2 + 30);
         }
 
+        /// <summary>Рисует стартовый экран с подсказками</summary>
         private static void DrawStartScreen(Graphics graphics, Size clientSize)
         {
             var boxWidth = 600;
@@ -216,6 +224,7 @@ namespace Arkanoight.Views
             }
         }
 
+        /// <summary>Рисует экран окончания игры с таблицей рекордов</summary>
         private static void DrawGameOverScreen(Graphics graphics, IArkanoightEngine engine, Size clientSize)
         {
             var scores = ScoreManager.GetScores();
@@ -249,8 +258,10 @@ namespace Arkanoight.Views
             }
         }
 
+        /// <summary>Помечает буфер как устаревший (требующий перерисовки)</summary>
         public static void MarkDirty() => bufferDirty = true;
 
+        /// <summary>Принудительно обновляет отображение из буфера</summary>
         public static void RefreshDisplay()
         {
             if (targetControl != null && buffer != null && !targetControl.IsDisposed)
@@ -262,6 +273,7 @@ namespace Arkanoight.Views
             }
         }
 
+        /// <summary>Полностью перерисовывает и отображает игру</summary>
         public static void Render(IArkanoightEngine engine, Size clientSize)
         {
             if (buffer == null) return;
@@ -270,6 +282,7 @@ namespace Arkanoight.Views
             RefreshDisplay();
         }
 
+        /// <summary>Очищает все кэшированные ресурсы</summary>
         public static void Cleanup()
         {
             buffer?.Dispose();
@@ -311,10 +324,14 @@ namespace Arkanoight.Views
         }
     }
 
+    /// <summary>
+    /// Контрол для отображения игры
+    /// </summary>
     public class GameCanvas : Control
     {
         private IArkanoightEngine engine;
 
+        /// <summary>Получает или задает игровой движок</summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [Browsable(false)]
         public IArkanoightEngine GameEngine
@@ -323,11 +340,13 @@ namespace Arkanoight.Views
             set { engine = value; }
         }
 
+        /// <summary>Инициализирует новый экземпляр игрового холста</summary>
         public GameCanvas()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
         }
 
+        /// <summary>Обрабатывает событие отрисовки контрола</summary>
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -340,6 +359,7 @@ namespace Arkanoight.Views
             }
         }
 
+        /// <summary>Освобождает ресурсы, используемые контролом</summary>
         protected override void Dispose(bool disposing)
         {
             if (disposing)

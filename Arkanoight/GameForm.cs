@@ -1,11 +1,13 @@
-﻿using Arkanoight.Core;
-using Arkanoight.Views;
-using System;
+﻿using System;
 using System.Windows.Forms;
-using static Arkanoight.Core.IArkanoightEngine;
+using Arkanoight.Core;
+using Arkanoight.Views;
 
 namespace Arkanoight
 {
+    /// <summary>
+    /// Главная форма приложения
+    /// </summary>
     public partial class GameForm : Form
     {
         private IArkanoightEngine engine;
@@ -21,6 +23,7 @@ namespace Arkanoight
 
         private DateTime lastUpdate = DateTime.Now;
 
+        /// <summary>Инициализирует новый экземпляр главной формы</summary>
         public GameForm()
         {
             ScoreManager.LoadScores();
@@ -29,6 +32,7 @@ namespace Arkanoight
             Load += (s, e) => Focus();
         }
 
+        /// <summary>Инициализирует компоненты формы</summary>
         private void InitializeForm()
         {
             Text = "Арканоид";
@@ -39,6 +43,7 @@ namespace Arkanoight
             KeyPreview = true;
         }
 
+        /// <summary>Инициализирует игровые компоненты</summary>
         private void InitializeGame()
         {
             engine = new ArkanoightEngine(ClientSize.Width, ClientSize.Height);
@@ -72,6 +77,7 @@ namespace Arkanoight
             GC.Collect();
         }
 
+        /// <summary>Обработчик тика таймера</summary>
         private void GameTimer_Tick(object sender, EventArgs e)
         {
             if (engine == null) return;
@@ -134,6 +140,7 @@ namespace Arkanoight
             }
         }
 
+        /// <summary>Перемещает платформу за курсором мыши</summary>
         private void MovePlatform(int x)
         {
             if (engine == null) return;
@@ -149,6 +156,7 @@ namespace Arkanoight
             }
         }
 
+        /// <summary>Обработчик нажатия клавиш</summary>
         private void GameForm_KeyDown(object sender, KeyEventArgs e)
         {
             var needRedraw = false;
@@ -185,6 +193,7 @@ namespace Arkanoight
             }
         }
 
+        /// <summary>Обработка изменения размера формы</summary>
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
