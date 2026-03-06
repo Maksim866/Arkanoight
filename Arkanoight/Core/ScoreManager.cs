@@ -12,7 +12,6 @@ namespace Arkanoight.Core
     /// </summary>
     public static class ScoreManager
     {
-        private static readonly string ScoresFilePath = "scores.json";
         private static List<ScoreRecord> scores = new List<ScoreRecord>();
 
         /// <summary>
@@ -22,16 +21,10 @@ namespace Arkanoight.Core
         {
             try
             {
-                if (File.Exists(ScoresFilePath))
-                {
-                    string json = File.ReadAllText(ScoresFilePath);
-                    scores = JsonSerializer.Deserialize<List<ScoreRecord>>(json) ?? new List<ScoreRecord>();
-                }
+                if (File.Exists("scores.json"))
+                    scores = JsonSerializer.Deserialize<List<ScoreRecord>>(File.ReadAllText("scores.json")) ?? new List<ScoreRecord>();
             }
-            catch
-            {
-                scores = new List<ScoreRecord>();
-            }
+            catch { }
         }
 
         /// <summary>
@@ -41,55 +34,32 @@ namespace Arkanoight.Core
         {
             try
             {
-                string json = JsonSerializer.Serialize(scores);
-                File.WriteAllText(ScoresFilePath, json);
+                File.WriteAllText("scores.json", JsonSerializer.Serialize(scores));
             }
             catch { }
         }
 
         /// <summary>
-        /// Добавляет новый рекорд (только для побед или поражений, не для досрочного выхода)
+        /// Добавляет новый рекорд
         /// </summary>
-        public static void AddScore(string playerName, int score, int lives, string gameEndType)
+        public static void AddScore(string name, int score, int lives, string type)
         {
-            // Не добавляем досрочные выходы
-            if (gameEndType == "Досрочный выход")
-                return;
-
+            if (type == "Досрочный выход") return;
             scores.Add(new ScoreRecord
             {
-                PlayerName = playerName,
+                PlayerName = name,
                 Score = score,
                 Lives = lives,
                 Date = DateTime.Now,
-                GameEndType = gameEndType
+                GameEndType = type
             });
-
-            // Сортируем по убыванию очков
-            scores = scores.OrderByDescending(s => s.Score).ToList();
-
-            // Оставляем только топ-10
-            if (scores.Count > 10)
-                scores = scores.Take(10).ToList();
-
+            scores = scores.OrderByDescending(s => s.Score).Take(10).ToList();
             SaveScores();
         }
 
         /// <summary>
-        /// Получает все рекорды (отсортированные по убыванию)
+        /// Получает все рекорды
         /// </summary>
-        public static List<ScoreRecord> GetScores()
-        {
-            return scores.OrderByDescending(s => s.Score).ToList();
-        }
-
-        /// <summary>
-        /// Очищает все рекорды
-        /// </summary>
-        public static void ClearScores()
-        {
-            scores.Clear();
-            SaveScores();
-        }
+        public static List<ScoreRecord> GetScores() => scores.OrderByDescending(s => s.Score).ToList();
     }
 }

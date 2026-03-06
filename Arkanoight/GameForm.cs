@@ -2,7 +2,6 @@
 using System.Windows.Forms;
 using Arkanoight.Core;
 using Arkanoight.Views;
-using Arkanoight.Models;
 
 namespace Arkanoight
 {
@@ -11,24 +10,17 @@ namespace Arkanoight
     /// </summary>
     public partial class GameForm : Form
     {
-        private IArkanoightEngine gameEngine;
-        private GameCanvas gameCanvas;
+        private IArkanoightEngine engine;
+        private GameCanvas canvas;
         private System.Windows.Forms.Timer gameTimer;
-        private bool gameEnded = false;
-        private string currentPlayerName = "Игрок";
+        private bool ended;
+        private int lastScore = -1;
+        private int lastLives = -1;
 
-        private const int WINDOW_WIDTH = 800;
-        private const int WINDOW_HEIGHT = 600;
-        private const int TIMER_INTERVAL = 20;
-
-        /// <summary>
-        /// Инициализирует новый экземпляр главной формы
-        /// </summary>
+        /// <summary>Конструктор формы</summary>
         public GameForm()
         {
-            // Загружаем рекорды
             ScoreManager.LoadScores();
-
             InitializeForm();
             InitializeGame();
             Load += (s, e) => Focus();
@@ -36,117 +28,159 @@ namespace Arkanoight
 
         private void InitializeForm()
         {
-            this.Text = "Арканоид";
-            this.Size = new System.Drawing.Size(WINDOW_WIDTH, WINDOW_HEIGHT);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.KeyPreview = true;
+            Text = "Арканоид";
+            Size = new System.Drawing.Size(800, 600);
+            StartPosition = FormStartPosition.CenterScreen;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            KeyPreview = true;
         }
 
         private void InitializeGame()
         {
-            gameEngine = new ArkanoightEngine(
-                WINDOW_WIDTH - 16,
-                WINDOW_HEIGHT - 39);
+            engine = new ArkanoightEngine(ClientSize.Width, ClientSize.Height);
 
-            gameEnded = false;
-
-            gameCanvas = new GameCanvas
+            canvas = new GameCanvas
             {
                 Dock = DockStyle.Fill,
-                GameEngine = gameEngine
+                GameEngine = engine
             };
 
-            gameCanvas.MouseMove += (s, e) => MovePlatform(e.X);
-            gameCanvas.MouseClick += (s, e) =>
+            canvas.MouseMove += (s, e) => MovePlatform(e.X);
+            canvas.MouseClick += (s, e) =>
             {
                 if (e.Button == MouseButtons.Left)
-                    gameEngine?.LaunchBall();
+                    engine.LaunchBall();
             };
 
-            Controls.Add(gameCanvas);
+            Controls.Add(canvas);
 
+            // Инициализируем буфер
+            GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
+
+            // Таймер только для обновления логики
             gameTimer = new System.Windows.Forms.Timer();
-            gameTimer.Interval = TIMER_INTERVAL;
+            gameTimer.Interval = 16; // ~60 FPS
             gameTimer.Tick += GameTimer_Tick;
             gameTimer.Start();
 
             KeyDown += GameForm_KeyDown;
-            FormClosing += GameForm_FormClosing;
+            FormClosing += (s, e) => ScoreManager.SaveScores();
         }
 
         private void GameTimer_Tick(object sender, EventArgs e)
         {
-            gameEngine?.Update();
+            if (engine == null) return;
 
-            // Проверяем, закончилась ли игра (победа или поражение)
-            if (gameEngine != null && !gameEnded)
+            // Обновляем логику
+            engine.Update();
+
+            // Проверяем окончание игры
+            if (!ended)
             {
-                if (gameEngine.GameState.IsGameOver)
+                if (engine.GameState.IsGameOver)
                 {
-                    gameEnded = true;
-                    // Поражение
-                    ScoreManager.AddScore(currentPlayerName, gameEngine.GameState.Score, gameEngine.GameState.Lives, "Поражение");
+                    ended = true;
+                    ScoreManager.AddScore("Игрок", engine.GameState.Score,
+                        engine.GameState.Lives, "Поражение");
                 }
-                else if (gameEngine.GameState.IsGameWon)
+                else if (engine.GameState.IsGameWon)
                 {
-                    gameEnded = true;
-                    // Победа
-                    ScoreManager.AddScore(currentPlayerName, gameEngine.GameState.Score, gameEngine.GameState.Lives, "Победа");
+                    ended = true;
+                    ScoreManager.AddScore("Игрок", engine.GameState.Score,
+                        engine.GameState.Lives, "Победа");
                 }
             }
 
-            gameCanvas?.ForceRefresh();
+            // Проверяем, изменилось ли что-то, что требует перерисовки
+            bool needRedraw = false;
+
+            if (lastScore != engine.GameState.Score || lastLives != engine.GameState.Lives)
+            {
+                needRedraw = true;
+                lastScore = engine.GameState.Score;
+                lastLives = engine.GameState.Lives;
+            }
+
+            // Проверяем движение мячей
+            foreach (var ball in engine.Balls)
+            {
+                if (ball.IsActive && (ball.SpeedX != 0 || ball.SpeedY != 0))
+                {
+                    needRedraw = true;
+                    break;
+                }
+            }
+
+            // Проверяем падающие усиления
+            if (engine.PowerUps.Count > 0)
+                needRedraw = true;
+
+            // Если что-то изменилось - обновляем отображение
+            if (needRedraw)
+            {
+                GameVisuals.Render(engine, canvas.ClientSize);
+            }
         }
 
-        private void MovePlatform(int mouseX)
+        private void MovePlatform(int x)
         {
-            if (gameEngine == null) return;
+            if (engine == null) return;
 
-            int newX = mouseX - gameEngine.Platform.Width / 2;
-            newX = Math.Max(0, Math.Min(newX,
-                gameEngine.GameState.GameWidth - gameEngine.Platform.Width));
+            int oldX = engine.Platform.X;
+            int nx = Math.Max(0, Math.Min(x - engine.Platform.Width / 2,
+                engine.GameState.GameWidth - engine.Platform.Width));
 
-            gameEngine.SetPlatformPosition(newX);
+            if (oldX != nx)
+            {
+                engine.SetPlatformPosition(nx);
+                GameVisuals.Render(engine, canvas.ClientSize);
+            }
         }
 
         private void GameForm_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.R)
+            bool needRedraw = false;
+
+            if (e.KeyCode == Keys.R && engine != null &&
+                (engine.GameState.IsGameOver || engine.GameState.IsGameWon))
             {
-                if (gameEngine != null && (gameEngine.GameState.IsGameOver || gameEngine.GameState.IsGameWon))
-                {
-                    gameEngine.RestartGame();
-                    gameCanvas?.ForceRefresh();
-                    gameEnded = false;
-                    Focus();
-                }
+                engine.RestartGame();
+                ended = false;
+                lastScore = -1;
+                lastLives = -1;
+                needRedraw = true;
+                Focus();
             }
             else if (e.KeyCode == Keys.X)
             {
-                // Досрочный выход - не добавляем в рекорды
-                gameEngine?.GameOver();
-                gameCanvas?.ForceRefresh();
-                gameEnded = true;
-                Focus();
+                engine?.GameOver();
+                ended = true;
+                needRedraw = true;
             }
-            else if (e.KeyCode == Keys.Space)
+            else if (e.KeyCode == Keys.Space && engine != null &&
+                engine.IsBallLaunched && !engine.GameState.IsGameOver &&
+                !engine.GameState.IsGameWon)
             {
-                // Пробел - пауза (только если мяч запущен и игра не завершена)
-                if (gameEngine != null && gameEngine.IsBallLaunched &&
-                    !gameEngine.GameState.IsGameOver && !gameEngine.GameState.IsGameWon)
-                {
-                    gameEngine.TogglePause();
-                    gameCanvas?.ForceRefresh();
-                }
+                engine.TogglePause();
+                needRedraw = true;
+            }
+
+            if (needRedraw)
+            {
+                GameVisuals.Render(engine, canvas.ClientSize);
             }
         }
 
-        private void GameForm_FormClosing(object sender, FormClosingEventArgs e)
+        /// <summary>Обработка изменения размера формы</summary>
+        protected override void OnResize(EventArgs e)
         {
-            // Сохраняем рекорды при закрытии
-            ScoreManager.SaveScores();
+            base.OnResize(e);
+            if (canvas != null && engine != null)
+            {
+                GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
+                GameVisuals.Render(engine, canvas.ClientSize);
+            }
         }
     }
 }
