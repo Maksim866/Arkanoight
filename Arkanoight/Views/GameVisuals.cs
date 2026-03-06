@@ -7,12 +7,9 @@ using Arkanoight.Models;
 
 namespace Arkanoight.Views
 {
-    /// <summary>
-    /// Класс для визуализации игры с кэшированием ресурсов
-    /// </summary>
     public static class GameVisuals
     {
-        // Кэшированные цвета
+        // Цвета
         private static readonly Color[] BrickColors = { Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue };
         private static readonly Color[] HitColors = {
             Color.FromArgb(255, 255, 150, 150),
@@ -22,7 +19,7 @@ namespace Arkanoight.Views
             Color.FromArgb(255, 150, 150, 255)
         };
 
-        // Кэшированные кисти и перья
+        // Кисти
         private static readonly SolidBrush platformBrush = new SolidBrush(Color.Cyan);
         private static readonly SolidBrush ballBrush = new SolidBrush(Color.Yellow);
         private static readonly Pen borderPen = new Pen(Color.White, 1);
@@ -41,11 +38,11 @@ namespace Arkanoight.Views
         private static readonly Pen goldPen2 = new Pen(Color.Gold, 2);
         private static readonly Pen whitePen1 = new Pen(Color.White, 1);
 
-        // Кэшированные кисти для кирпичей
+        // Кисти для кирпичей
         private static readonly SolidBrush[] brickBrushes;
         private static readonly SolidBrush[] hitBrushes;
 
-        // Кэшированные шрифты
+        // Шрифты
         private static readonly Font scoreFont = new Font("Arial", 14, FontStyle.Bold);
         private static readonly Font pauseFont = new Font("Arial", 48, FontStyle.Bold);
         private static readonly Font continueFont = new Font("Arial", 18, FontStyle.Regular);
@@ -64,19 +61,17 @@ namespace Arkanoight.Views
         private static bool bufferDirty = true;
         private static Control targetControl;
 
-        // Статический конструктор для инициализации массивов кистей
         static GameVisuals()
         {
             brickBrushes = new SolidBrush[BrickColors.Length];
-            for (int i = 0; i < BrickColors.Length; i++)
+            for (var i = 0; i < BrickColors.Length; i++)
                 brickBrushes[i] = new SolidBrush(BrickColors[i]);
 
             hitBrushes = new SolidBrush[HitColors.Length];
-            for (int i = 0; i < HitColors.Length; i++)
+            for (var i = 0; i < HitColors.Length; i++)
                 hitBrushes[i] = new SolidBrush(HitColors[i]);
         }
 
-        /// <summary>Инициализирует буфер и привязывает к контролу</summary>
         public static void Initialize(Control control, int width, int height)
         {
             targetControl = control;
@@ -91,195 +86,196 @@ namespace Arkanoight.Views
             bufferDirty = true;
         }
 
-        /// <summary>Рисует игру в буфер</summary>
-        public static void DrawToBuffer(IArkanoightEngine e, Size cs)
+        public static void DrawToBuffer(IArkanoightEngine engine, Size clientSize)
         {
             if (buffer == null) return;
 
-            using (var g = Graphics.FromImage(buffer))
+            using (var graphics = Graphics.FromImage(buffer))
             {
-                g.Clear(Color.Black);
+                graphics.Clear(Color.Black);
 
                 // Платформа
-                g.FillRectangle(platformBrush, e.Platform.X, e.Platform.Y, e.Platform.Width, e.Platform.Height);
+                graphics.FillRectangle(platformBrush, engine.Platform.X, engine.Platform.Y, engine.Platform.Width, engine.Platform.Height);
 
                 // Мячи
-                foreach (var ball in e.Balls.Where(b => b.IsActive))
-                    g.FillEllipse(ballBrush, ball.X, ball.Y, ball.Size, ball.Size);
+                foreach (var ball in engine.Balls.Where(b => b.IsActive))
+                    graphics.FillEllipse(ballBrush, ball.X, ball.Y, ball.Size, ball.Size);
 
                 // Кирпичи
-                foreach (var br in e.Bricks.Where(b => b.IsActive))
+                foreach (var brick in engine.Bricks.Where(b => b.IsActive))
                 {
-                    var brush = br.IsHit ? hitBrushes[br.Row % hitBrushes.Length] : brickBrushes[br.Row % brickBrushes.Length];
-                    g.FillRectangle(brush, br.X, br.Y, br.Width, br.Height);
-                    g.DrawRectangle(borderPen, br.X, br.Y, br.Width, br.Height);
+                    var brush = brick.IsHit ? hitBrushes[brick.Row % hitBrushes.Length] : brickBrushes[brick.Row % brickBrushes.Length];
+                    graphics.FillRectangle(brush, brick.X, brick.Y, brick.Width, brick.Height);
+                    graphics.DrawRectangle(borderPen, brick.X, brick.Y, brick.Width, brick.Height);
 
-                    if (br.Health < br.MaxHealth)
-                        for (int i = 0; i < br.MaxHealth - br.Health; i++)
-                            g.DrawLine(damagePen, br.X + 10 + i * 10, br.Y + 5,
-                                br.X + br.Width - 10 - i * 10, br.Y + br.Height - 5);
+                    if (brick.Health < brick.MaxHealth)
+                        for (var i = 0; i < brick.MaxHealth - brick.Health; i++)
+                            graphics.DrawLine(damagePen, brick.X + 10 + i * 10, brick.Y + 5,
+                                brick.X + brick.Width - 10 - i * 10, brick.Y + brick.Height - 5);
                 }
 
-                // Усиления - с центрированными значками
-                foreach (var u in e.PowerUps.Where(u => u.IsActive))
+                // Усиления
+                foreach (var powerUp in engine.PowerUps.Where(p => p.IsActive))
                 {
                     SolidBrush colorBrush;
-                    string sym;
+                    string symbol;
 
-                    if (u.Type == PowerUpType.ExtraBall)
+                    if (powerUp.Type == PowerUpType.ExtraBall)
                     {
                         colorBrush = cyanBrush;
-                        sym = "⚽";
+                        symbol = "⚽";
                     }
-                    else if (u.Type == PowerUpType.DamageBoost)
+                    else if (powerUp.Type == PowerUpType.DamageBoost)
                     {
                         colorBrush = redBrush;
-                        sym = "⚡";
+                        symbol = "⚡";
                     }
                     else
                     {
                         colorBrush = greenBrush;
-                        sym = "⬌";
+                        symbol = "⬌";
                     }
 
-                    // Рисуем квадратик
-                    g.FillRectangle(colorBrush, u.X, u.Y, u.Size, u.Size);
-                    g.DrawRectangle(whitePen1, u.X, u.Y, u.Size, u.Size);
+                    graphics.FillRectangle(colorBrush, powerUp.X, powerUp.Y, powerUp.Size, powerUp.Size);
+                    graphics.DrawRectangle(whitePen1, powerUp.X, powerUp.Y, powerUp.Size, powerUp.Size);
 
-                    // Центрируем символ
-                    SizeF textSize = g.MeasureString(sym, symbolFont);
-                    float textX = u.X + (u.Size - textSize.Width) / 2;
-                    float textY = u.Y + (u.Size - textSize.Height) / 2;
-                    g.DrawString(sym, symbolFont, blackBrush, textX, textY);
+                    var textSize = graphics.MeasureString(symbol, symbolFont);
+                    var textX = powerUp.X + (powerUp.Size - textSize.Width) / 2;
+                    var textY = powerUp.Y + (powerUp.Size - textSize.Height) / 2;
+                    graphics.DrawString(symbol, symbolFont, blackBrush, textX, textY);
                 }
 
                 // UI
-                g.DrawString($"Счет: {e.GameState.Score}", scoreFont, whiteBrush, 10, 10);
-                g.DrawString($"Жизни: {e.GameState.Lives}", scoreFont, whiteBrush, cs.Width - 100, 10);
+                graphics.DrawString($"Счет: {engine.GameState.Score}", scoreFont, whiteBrush, 10, 10);
+                graphics.DrawString($"Жизни: {engine.GameState.Lives}", scoreFont, whiteBrush, clientSize.Width - 100, 10);
 
                 // Специальные экраны
-                if (e.GameState.IsPaused)
-                    DrawPauseScreen(g, cs);
-                else if (!e.IsBallLaunched && !e.GameState.IsGameOver && !e.GameState.IsGameWon)
-                    DrawStartScreen(g, cs);
-                else if (e.GameState.IsGameOver || e.GameState.IsGameWon)
-                    DrawGameOverScreen(g, e, cs);
+                if (engine.GameState.IsPaused)
+                    DrawPauseScreen(graphics, clientSize);
+                else if (!engine.IsBallLaunched && !engine.GameState.IsGameOver && !engine.GameState.IsGameWon)
+                    DrawStartScreen(graphics, clientSize);
+                else if (engine.GameState.IsGameOver || engine.GameState.IsGameWon)
+                    DrawGameOverScreen(graphics, engine, clientSize);
             }
 
             bufferDirty = false;
         }
 
-        private static void DrawPauseScreen(Graphics g, Size cs)
+        private static void DrawPauseScreen(Graphics graphics, Size clientSize)
         {
-            g.FillRectangle(pauseBgBrush, 0, 0, cs.Width, cs.Height);
-            g.DrawString("ПАУЗА", pauseFont, whiteBrush, (cs.Width - g.MeasureString("ПАУЗА", pauseFont).Width) / 2, cs.Height / 2 - 30);
-            g.DrawString("Нажмите ПРОБЕЛ для продолжения", continueFont, yellowBrush,
-                (cs.Width - g.MeasureString("Нажмите ПРОБЕЛ для продолжения", continueFont).Width) / 2, cs.Height / 2 + 30);
+            graphics.FillRectangle(pauseBgBrush, 0, 0, clientSize.Width, clientSize.Height);
+            graphics.DrawString("ПАУЗА", pauseFont, whiteBrush,
+                (clientSize.Width - graphics.MeasureString("ПАУЗА", pauseFont).Width) / 2,
+                clientSize.Height / 2 - 30);
+            graphics.DrawString("Нажмите ПРОБЕЛ для продолжения", continueFont, yellowBrush,
+                (clientSize.Width - graphics.MeasureString("Нажмите ПРОБЕЛ для продолжения", continueFont).Width) / 2,
+                clientSize.Height / 2 + 30);
         }
 
-        private static void DrawStartScreen(Graphics g, Size cs)
+        private static void DrawStartScreen(Graphics graphics, Size clientSize)
         {
-            int w = 600, h = 450, x = (cs.Width - w) / 2, y = (cs.Height - h) / 2 - 20;
-            g.FillRectangle(hintBgBrush, x, y, w, h);
-            g.DrawRectangle(cyanPen3, x, y, w, h);
-            g.DrawString("АРКАНОИД", titleFont, cyanBrush, x + 150, y + 25);
+            var boxWidth = 600;
+            var boxHeight = 450;
+            var boxX = (clientSize.Width - boxWidth) / 2;
+            var boxY = (clientSize.Height - boxHeight) / 2 - 20;
 
-            g.DrawString("• ЛКМ - запуск мяча", controlFont, whiteBrush, x + 50, y + 120);
-            g.DrawString("• Движение мыши - управление платформой", controlFont, whiteBrush, x + 50, y + 145);
-            g.DrawString("• Пробел - пауза / продолжить", controlFont, whiteBrush, x + 50, y + 170);
-            g.DrawString("• R - перезапуск (после победы/поражения)", controlFont, whiteBrush, x + 50, y + 195);
+            graphics.FillRectangle(hintBgBrush, boxX, boxY, boxWidth, boxHeight);
+            graphics.DrawRectangle(cyanPen3, boxX, boxY, boxWidth, boxHeight);
+            graphics.DrawString("АРКАНОИД", titleFont, cyanBrush, boxX + 150, boxY + 25);
 
-            int sy = y + 280;
+            graphics.DrawString("• ЛКМ - запуск мяча", controlFont, whiteBrush, boxX + 50, boxY + 120);
+            graphics.DrawString("• Движение мыши - управление платформой", controlFont, whiteBrush, boxX + 50, boxY + 145);
+            graphics.DrawString("• Пробел - пауза / продолжить", controlFont, whiteBrush, boxX + 50, boxY + 170);
+            graphics.DrawString("• R - перезапуск (после победы/поражения)", controlFont, whiteBrush, boxX + 50, boxY + 195);
+
+            var startY = boxY + 280;
             var types = new[] {
                 (cyanBrush, "⚽", "Голубой - дополнительный мяч"),
                 (redBrush, "⚡", "Красный - увеличение урона всех мячей на 1"),
                 (greenBrush, "⬌", "Зеленый - широкая платформа на 3 секунды")
             };
 
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < types.Length; i++)
             {
-                int squareX = x + 40;
-                int squareY = sy + i * 45;
-                int squareSize = 25;
+                var squareX = boxX + 40;
+                var squareY = startY + i * 45;
+                var squareSize = 25;
 
-                // Рисуем квадратик
-                g.FillRectangle(types[i].Item1, squareX, squareY, squareSize, squareSize);
-                g.DrawRectangle(whitePen1, squareX, squareY, squareSize, squareSize);
+                graphics.FillRectangle(types[i].Item1, squareX, squareY, squareSize, squareSize);
+                graphics.DrawRectangle(whitePen1, squareX, squareY, squareSize, squareSize);
 
-                // Центрируем символ в квадратике
-                SizeF textSize = g.MeasureString(types[i].Item2, symbolFont);
-                float textX = squareX + (squareSize - textSize.Width) / 2;
-                float textY = squareY + (squareSize - textSize.Height) / 2;
-                g.DrawString(types[i].Item2, symbolFont, blackBrush, textX, textY);
+                var textSize = graphics.MeasureString(types[i].Item2, symbolFont);
+                var textX = squareX + (squareSize - textSize.Width) / 2;
+                var textY = squareY + (squareSize - textSize.Height) / 2;
+                graphics.DrawString(types[i].Item2, symbolFont, blackBrush, textX, textY);
 
-                // Текст описания
-                g.DrawString(types[i].Item3, powerFont, whiteBrush, x + 75, squareY + 5);
-                g.DrawString(i == 0 ? "(появляется на платформе)" :
-                           i == 1 ? "(суммируется)" : "(временный эффект)", powerFont, whiteBrush, x + 75, squareY + 22);
+                graphics.DrawString(types[i].Item3, powerFont, whiteBrush, boxX + 75, squareY + 5);
+                graphics.DrawString(i == 0 ? "(появляется на платформе)" :
+                                   i == 1 ? "(суммируется)" : "(временный эффект)",
+                                   powerFont, whiteBrush, boxX + 75, squareY + 22);
             }
         }
 
-        private static void DrawGameOverScreen(Graphics g, IArkanoightEngine e, Size cs)
+        private static void DrawGameOverScreen(Graphics graphics, IArkanoightEngine engine, Size clientSize)
         {
             var scores = ScoreManager.GetScores();
-            string msg = e.GameState.IsGameOver ? "ИГРА ОКОНЧЕНА!" : "ВЫ ПОБЕДИЛИ!";
-            var msgBrush = e.GameState.IsGameOver ? redBrush : goldBrush;
-            g.DrawString(msg, gameOverFont, msgBrush, (cs.Width - g.MeasureString(msg, gameOverFont).Width) / 2, 50);
+            var message = engine.GameState.IsGameOver ? "ИГРА ОКОНЧЕНА!" : "ВЫ ПОБЕДИЛИ!";
+            var messageBrush = engine.GameState.IsGameOver ? redBrush : goldBrush;
 
-            int bw = 400, bh = 280, bx = (cs.Width - bw) / 2, by = (cs.Height - bh) / 2 + 30;
-            g.FillRectangle(grayBrush, bx, by, bw, bh);
-            g.DrawRectangle(goldPen2, bx, by, bw, bh);
-            g.DrawString("ТАБЛИЦА РЕКОРДОВ", scoreboardTitleFont, goldBrush, bx + 80, by + 10);
+            graphics.DrawString(message, gameOverFont, messageBrush,
+                (clientSize.Width - graphics.MeasureString(message, gameOverFont).Width) / 2, 50);
+
+            var boardWidth = 400;
+            var boardHeight = 280;
+            var boardX = (clientSize.Width - boardWidth) / 2;
+            var boardY = (clientSize.Height - boardHeight) / 2 + 30;
+
+            graphics.FillRectangle(grayBrush, boardX, boardY, boardWidth, boardHeight);
+            graphics.DrawRectangle(goldPen2, boardX, boardY, boardWidth, boardHeight);
+            graphics.DrawString("ТАБЛИЦА РЕКОРДОВ", scoreboardTitleFont, goldBrush, boardX + 80, boardY + 10);
 
             if (scores.Count == 0)
             {
-                g.DrawString("Пока нет рекордов", italicFont, whiteBrush, bx + 110, by + 120);
+                graphics.DrawString("Пока нет рекордов", italicFont, whiteBrush, boardX + 110, boardY + 120);
             }
-            else for (int i = 0; i < scores.Count; i++)
+            else for (var i = 0; i < scores.Count; i++)
             {
-                g.DrawString($"{i + 1}. {scores[i].PlayerName}", scoreboardFont, whiteBrush, bx + 20, by + 80 + i * 20);
-                g.DrawString(scores[i].Score.ToString(), scoreboardFont, whiteBrush, bx + 200, by + 80 + i * 20);
+                var yPos = boardY + 80 + i * 20;
+                graphics.DrawString($"{i + 1}. {scores[i].PlayerName}", scoreboardFont, whiteBrush, boardX + 20, yPos);
+                graphics.DrawString(scores[i].Score.ToString(), scoreboardFont, whiteBrush, boardX + 200, yPos);
 
                 var typeBrush = scores[i].GameEndType == "Победа" ? goldBrush : redBrush;
-                g.DrawString(scores[i].GameEndType, scoreboardFont, typeBrush, bx + 280, by + 80 + i * 20);
+                graphics.DrawString(scores[i].GameEndType, scoreboardFont, typeBrush, boardX + 280, yPos);
             }
         }
 
-        /// <summary>Помечает буфер как устаревший</summary>
-        public static void MarkDirty()
-        {
-            bufferDirty = true;
-        }
+        public static void MarkDirty() => bufferDirty = true;
 
-        /// <summary>Принудительно обновляет отображение из буфера</summary>
         public static void RefreshDisplay()
         {
             if (targetControl != null && buffer != null && !targetControl.IsDisposed)
             {
-                using (var g = targetControl.CreateGraphics())
+                using (var graphics = targetControl.CreateGraphics())
                 {
-                    g.DrawImage(buffer, 0, 0);
+                    graphics.DrawImage(buffer, 0, 0);
                 }
             }
         }
 
-        /// <summary>Полностью перерисовывает и отображает</summary>
-        public static void Render(IArkanoightEngine e, Size cs)
+        public static void Render(IArkanoightEngine engine, Size clientSize)
         {
             if (buffer == null) return;
 
-            DrawToBuffer(e, cs);
+            DrawToBuffer(engine, clientSize);
             RefreshDisplay();
         }
 
-        /// <summary>Очищает ресурсы</summary>
         public static void Cleanup()
         {
             buffer?.Dispose();
             buffer = null;
             targetControl = null;
 
-            // Освобождаем кэшированные ресурсы
             platformBrush.Dispose();
             ballBrush.Dispose();
             borderPen.Dispose();
@@ -315,14 +311,10 @@ namespace Arkanoight.Views
         }
     }
 
-    /// <summary>
-    /// Контрол для отображения игры
-    /// </summary>
     public class GameCanvas : Control
     {
         private IArkanoightEngine engine;
 
-        /// <summary>Игровой движок</summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [Browsable(false)]
         public IArkanoightEngine GameEngine
@@ -331,13 +323,11 @@ namespace Arkanoight.Views
             set { engine = value; }
         }
 
-        /// <summary>Конструктор</summary>
         public GameCanvas()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
         }
 
-        /// <summary>Отрисовка контрола</summary>
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -350,7 +340,6 @@ namespace Arkanoight.Views
             }
         }
 
-        /// <summary>Освобождение ресурсов</summary>
         protected override void Dispose(bool disposing)
         {
             if (disposing)
