@@ -17,6 +17,14 @@ namespace Arkanoight
         private int lastScore = -1;
         private int lastLives = -1;
 
+        // Счетчики для оптимизации
+        private int frameSkip = 0;
+        private const int MAX_FRAME_SKIP = 2;
+
+        // Для точного замера времени
+        private DateTime lastUpdate = DateTime.Now;
+        private const int TICK_INTERVAL = 16;
+
         /// <summary>Конструктор формы</summary>
         public GameForm()
         {
@@ -34,6 +42,8 @@ namespace Arkanoight
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             KeyPreview = true;
+
+            // DoubleBuffered УБРАН - не используем
         }
 
         private void InitializeGame()
@@ -58,19 +68,34 @@ namespace Arkanoight
             // Инициализируем буфер
             GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
 
-            // Таймер только для обновления логики
+            // Первая отрисовка
+            GameVisuals.Render(engine, canvas.ClientSize);
+
+            // Таймер с фиксированным интервалом
             gameTimer = new System.Windows.Forms.Timer();
-            gameTimer.Interval = 16; // ~60 FPS
+            gameTimer.Interval = TICK_INTERVAL;
             gameTimer.Tick += GameTimer_Tick;
             gameTimer.Start();
 
             KeyDown += GameForm_KeyDown;
             FormClosing += (s, e) => ScoreManager.SaveScores();
+
+            // Принудительная сборка мусора при запуске
+            GC.Collect();
         }
 
         private void GameTimer_Tick(object sender, EventArgs e)
         {
             if (engine == null) return;
+
+            // Замеряем время с последнего обновления
+            DateTime now = DateTime.Now;
+            double elapsedMs = (now - lastUpdate).TotalMilliseconds;
+
+            // Ограничиваем максимальный шаг
+            if (elapsedMs > 50) elapsedMs = TICK_INTERVAL;
+
+            lastUpdate = now;
 
             // Обновляем логику
             engine.Update();
@@ -92,9 +117,21 @@ namespace Arkanoight
                 }
             }
 
-            // Проверяем, изменилось ли что-то, что требует перерисовки
+            // Определяем, нужно ли перерисовывать
             bool needRedraw = false;
 
+            // Всегда перерисовываем, когда мячи движутся (но с пропуском кадров)
+            if (engine.IsBallLaunched)
+            {
+                frameSkip = (frameSkip + 1) % MAX_FRAME_SKIP;
+                needRedraw = (frameSkip == 0);
+            }
+
+            // Падающие усиления - перерисовываем каждый кадр
+            if (engine.PowerUps.Count > 0)
+                needRedraw = true;
+
+            // Изменение счета или жизней - перерисовываем
             if (lastScore != engine.GameState.Score || lastLives != engine.GameState.Lives)
             {
                 needRedraw = true;
@@ -102,24 +139,19 @@ namespace Arkanoight
                 lastLives = engine.GameState.Lives;
             }
 
-            // Проверяем движение мячей
-            foreach (var ball in engine.Balls)
-            {
-                if (ball.IsActive && (ball.SpeedX != 0 || ball.SpeedY != 0))
-                {
-                    needRedraw = true;
-                    break;
-                }
-            }
-
-            // Проверяем падающие усиления
-            if (engine.PowerUps.Count > 0)
+            // Специальные экраны - перерисовываем
+            if (engine.GameState.IsPaused || engine.GameState.IsGameOver || engine.GameState.IsGameWon || !engine.IsBallLaunched)
                 needRedraw = true;
 
-            // Если что-то изменилось - обновляем отображение
             if (needRedraw)
             {
                 GameVisuals.Render(engine, canvas.ClientSize);
+            }
+
+            // Периодическая сборка мусора (раз в 1000 кадров)
+            if (frameSkip == 0 && DateTime.Now.Millisecond % 1000 < 20)
+            {
+                GC.Collect(0, GCCollectionMode.Forced, false);
             }
         }
 
@@ -151,6 +183,9 @@ namespace Arkanoight
                 lastLives = -1;
                 needRedraw = true;
                 Focus();
+
+                // Принудительная сборка мусора при рестарте
+                GC.Collect();
             }
             else if (e.KeyCode == Keys.X)
             {
@@ -180,6 +215,9 @@ namespace Arkanoight
             {
                 GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
                 GameVisuals.Render(engine, canvas.ClientSize);
+
+                // Сборка мусора при изменении размера
+                GC.Collect();
             }
         }
     }

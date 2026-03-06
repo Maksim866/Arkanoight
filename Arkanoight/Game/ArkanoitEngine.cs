@@ -5,68 +5,23 @@ using Arkanoight.Models;
 
 namespace Arkanoight.Core
 {
-    /// <summary>
-    /// Интерфейс игрового движка
-    /// </summary>
     public interface IArkanoightEngine
     {
-        /// <summary>
-        /// Модель платформы
-        /// </summary>
         PlatformModel Platform { get; }
-        /// <summary>
-        /// Список всех мячей
-        /// </summary>
         List<BallModel> Balls { get; }
-        /// <summary>
-        /// Состояние игры
-        /// </summary>
         GameStateModel GameState { get; }
-        /// <summary>
-        /// Список всех кирпичей
-        /// </summary>
         IReadOnlyList<BrickModel> Bricks { get; }
-        /// <summary>
-        /// Список падающих усилений
-        /// </summary>
         List<PowerUpModel> PowerUps { get; }
-        /// <summary>
-        /// Запущен ли хотя бы один мяч
-        /// </summary>
         bool IsBallLaunched { get; }
-        /// <summary>
-        /// На паузе ли игра
-        /// </summary>
         bool IsPaused { get; }
-        /// <summary>
-        /// Обновление игровой логики
-        /// </summary>
         void Update();
-        /// <summary>
-        /// Установка позиции платформы
-        /// </summary>
         void SetPlatformPosition(int x);
-        /// <summary>
-        /// Запуск мячей
-        /// </summary>
         void LaunchBall();
-        /// <summary>
-        /// Перезапуск игры
-        /// </summary>
         void RestartGame();
-        /// <summary>
-        /// Переключение паузы
-        /// </summary>
         void TogglePause();
-        /// <summary>
-        /// Принудительное завершение игры
-        /// </summary>
         void GameOver();
     }
 
-    /// <summary>
-    /// Игровой движок арканоида
-    /// </summary>
     public class ArkanoightEngine : IArkanoightEngine
     {
         // Константы
@@ -74,6 +29,9 @@ namespace Arkanoight.Core
         private const int BS = 15, BSP = 8, BMS = 4, BO = 5;
         private const int BRW = 60, BRH = 20, BPC = 10, BPR = 5, BRY = 50, PTS = 10;
         private const int SL = 3, PF = 18, HITD = 5, PUS = 20, PUSP = 3;
+
+        // Флаг для фиксированной скорости
+        private const bool FIXED_SPEED = true;
 
         private PlatformModel p;
         private List<BallModel> balls;
@@ -83,47 +41,20 @@ namespace Arkanoight.Core
         private Random rnd = new Random();
         private int wideTimer, origW;
 
-        /// <summary>
-        /// Модель платформы
-        /// </summary>
         public PlatformModel Platform => p;
-        /// <summary>
-        /// Список всех мячей
-        /// </summary>
         public List<BallModel> Balls => balls;
-        /// <summary>
-        /// Состояние игры
-        /// </summary>
         public GameStateModel GameState => gs;
-        /// <summary>
-        /// Список всех кирпичей
-        /// </summary>
         public IReadOnlyList<BrickModel> Bricks => bricks;
-        /// <summary>
-        /// Список падающих усилений
-        /// </summary>
         public List<PowerUpModel> PowerUps => pu;
-        /// <summary>
-        /// Запущен ли хотя бы один мяч
-        /// </summary>
         public bool IsBallLaunched => balls.Any(b => b.IsActive && (b.SpeedX != 0 || b.SpeedY != 0));
-        /// <summary>
-        /// На паузе ли игра
-        /// </summary>
         public bool IsPaused => gs.IsPaused;
 
-        /// <summary>
-        /// Конструктор движка
-        /// </summary>
         public ArkanoightEngine(int w, int h)
         {
             gs = new GameStateModel { GameWidth = w, GameHeight = h, Lives = SL };
             RestartGame();
         }
 
-        /// <summary>
-        /// Перезапуск игры
-        /// </summary>
         public void RestartGame()
         {
             p = new PlatformModel { X = (gs.GameWidth - PW) / 2, Y = gs.GameHeight - PY, Width = PW, Height = PH };
@@ -186,9 +117,6 @@ namespace Arkanoight.Core
             wideTimer = 0;
         }
 
-        /// <summary>
-        /// Запуск мячей
-        /// </summary>
         public void LaunchBall()
         {
             if (!gs.IsBallLaunched && !gs.IsGameOver && !gs.IsGameWon)
@@ -199,29 +127,59 @@ namespace Arkanoight.Core
                     double a = (rnd.NextDouble() * 10 - 5) * Math.PI / 180;
                     b.SpeedX = (int)(BSP * Math.Sin(a));
                     b.SpeedY = -(int)(BSP * Math.Cos(a));
+
+                    // Гарантируем фиксированную скорость при запуске
+                    if (FIXED_SPEED)
+                    {
+                        NormalizeBallSpeed(b);
+                    }
                 }
             }
         }
 
-        /// <summary>
-        /// Обновление игровой логики
-        /// </summary>
+        /// <summary>Нормализует скорость мяча до базовой</summary>
+        private void NormalizeBallSpeed(BallModel b)
+        {
+            if (b.SpeedX == 0 && b.SpeedY == 0) return;
+
+            float currentSpeed = (float)Math.Sqrt(b.SpeedX * b.SpeedX + b.SpeedY * b.SpeedY);
+            float targetSpeed = BSP;
+
+            // Сохраняем направление, но фиксируем скорость
+            float scale = targetSpeed / currentSpeed;
+            b.SpeedX = (int)(b.SpeedX * scale);
+            b.SpeedY = (int)(b.SpeedY * scale);
+
+            // Убеждаемся, что скорость не нулевая
+            if (Math.Abs(b.SpeedY) < 1)
+                b.SpeedY = b.SpeedY < 0 ? -1 : 1;
+            if (Math.Abs(b.SpeedX) < 1)
+                b.SpeedX = b.SpeedX < 0 ? -1 : 1;
+        }
+
         public void Update()
         {
             if (gs.IsGameOver || gs.IsGameWon || gs.IsPaused) return;
 
-            foreach (var b in bricks.Where(b => b.IsHit))
+            // Эффекты ударов
+            for (int i = bricks.Count - 1; i >= 0; i--)
             {
-                b.HitFrames--;
-                if (b.HitFrames <= 0) b.IsHit = false;
+                var br = bricks[i];
+                if (br.IsHit)
+                {
+                    br.HitFrames--;
+                    if (br.HitFrames <= 0) br.IsHit = false;
+                }
             }
 
+            // Широкая платформа
             if (wideTimer > 0)
             {
                 wideTimer--;
                 if (wideTimer <= 0) p.Width = origW;
             }
 
+            // Падающие усиления
             for (int i = pu.Count - 1; i >= 0; i--)
             {
                 var u = pu[i];
@@ -247,6 +205,7 @@ namespace Arkanoight.Core
                             double a = (rnd.NextDouble() * 20 - 10) * Math.PI / 180;
                             nb.SpeedX = (int)(BSP * Math.Sin(a));
                             nb.SpeedY = -(int)(BSP * Math.Cos(a));
+                            if (FIXED_SPEED) NormalizeBallSpeed(nb);
                         }
                         balls.Add(nb);
                     }
@@ -284,46 +243,64 @@ namespace Arkanoight.Core
 
                 hasActiveBall = true;
 
+                // Сохраняем старую позицию для отладки
+                int oldX = b.X;
+                int oldY = b.Y;
+
+                // Движение
                 b.X += b.SpeedX;
                 b.Y += b.SpeedY;
 
+                // Стены - с гарантией фиксированной скорости
                 if (b.X <= 0)
                 {
                     b.X = 0;
                     b.SpeedX = Math.Abs(b.SpeedX);
+                    if (FIXED_SPEED) NormalizeBallSpeed(b);
                 }
                 else if (b.X + b.Size >= gs.GameWidth)
                 {
                     b.X = gs.GameWidth - b.Size;
                     b.SpeedX = -Math.Abs(b.SpeedX);
+                    if (FIXED_SPEED) NormalizeBallSpeed(b);
                 }
+
                 if (b.Y <= 0)
                 {
                     b.Y = 0;
                     b.SpeedY = Math.Abs(b.SpeedY);
+                    if (FIXED_SPEED) NormalizeBallSpeed(b);
                 }
 
+                // Платформа
                 if (b.X < p.X + p.Width && b.X + b.Size > p.X &&
                     b.Y < p.Y + p.Height && b.Y + b.Size > p.Y && b.SpeedY > 0)
                 {
                     b.Y = p.Y - b.Size;
+
                     float hit = (float)(b.X + b.Size / 2 - (p.X + p.Width / 2)) / (p.Width / 2);
                     hit = Math.Max(-1, Math.Min(1, hit));
-                    float sp = (float)Math.Sqrt(b.SpeedX * b.SpeedX + b.SpeedY * b.SpeedY);
-                    if (sp < 1) sp = BSP;
-                    int nx = (int)(sp * hit * PF / 10);
+
+                    // Новая горизонтальная скорость зависит от места удара
+                    int nx = (int)(BSP * hit * 1.5);
                     if (Math.Abs(nx) < BMS) nx = hit > 0 ? BMS : -BMS;
-                    int ny = (int)Math.Sqrt(sp * sp - nx * nx);
+
+                    // Вычисляем вертикальную скорость, чтобы сохранить общую скорость
+                    int ny = (int)Math.Sqrt(BSP * BSP - nx * nx);
                     if (ny < BMS)
                     {
                         ny = BMS;
-                        nx = (int)Math.Sqrt(sp * sp - ny * ny);
+                        nx = (int)Math.Sqrt(BSP * BSP - ny * ny);
                         if (hit < 0) nx = -nx;
                     }
+
                     b.SpeedX = nx;
                     b.SpeedY = -ny;
+
+                    if (FIXED_SPEED) NormalizeBallSpeed(b);
                 }
 
+                // Кирпичи
                 for (int j = bricks.Count - 1; j >= 0; j--)
                 {
                     var br = bricks[j];
@@ -354,6 +331,7 @@ namespace Arkanoight.Core
                             }
                         }
 
+                        // Определяем сторону столкновения
                         int ol = b.X + b.Size - br.X;
                         int or = br.X + br.Width - b.X;
                         int ot = b.Y + b.Size - br.Y;
@@ -364,16 +342,20 @@ namespace Arkanoight.Core
                             b.SpeedX = -b.SpeedX;
                         else
                             b.SpeedY = -b.SpeedY;
+
+                        if (FIXED_SPEED) NormalizeBallSpeed(b);
                         break;
                     }
                 }
 
+                // Потеря мяча
                 if (b.Y > gs.GameHeight)
                 {
                     b.IsActive = false;
                 }
             }
 
+            // Если нет активных мячей
             if (!hasActiveBall && gs.IsBallLaunched && !gs.IsGameOver)
             {
                 gs.Lives--;
@@ -393,13 +375,11 @@ namespace Arkanoight.Core
                 }
             }
 
+            // Победа
             if (bricks.All(b => !b.IsActive))
                 gs.IsGameWon = true;
         }
 
-        /// <summary>
-        /// Установка позиции платформы
-        /// </summary>
         public void SetPlatformPosition(int x)
         {
             int nx = Math.Max(0, Math.Min(x, gs.GameWidth - p.Width));
@@ -408,18 +388,12 @@ namespace Arkanoight.Core
                 balls[0].X = p.X + p.Width / 2 - balls[0].Size / 2;
         }
 
-        /// <summary>
-        /// Переключение паузы
-        /// </summary>
         public void TogglePause()
         {
             if (!gs.IsGameOver && !gs.IsGameWon && gs.IsBallLaunched)
                 gs.IsPaused = !gs.IsPaused;
         }
 
-        /// <summary>
-        /// Принудительное завершение игры
-        /// </summary>
         public void GameOver() => gs.IsGameOver = true;
     }
 }
