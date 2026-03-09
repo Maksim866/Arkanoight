@@ -50,7 +50,9 @@ namespace Arkanoid
             canvas.MouseClick += (s, e) =>
             {
                 if (e.Button == MouseButtons.Left)
+                {
                     engine.LaunchBall();
+                }
             };
 
             Controls.Add(canvas);
@@ -70,7 +72,10 @@ namespace Arkanoid
 
         private void GameTimer_Tick(object sender, EventArgs e)
         {
-            if (engine == null) return;
+            if (engine == null)
+            {
+                return;
+            }
 
             var now = DateTime.Now;
             var elapsedMs = (now - lastUpdate).TotalMilliseconds;
@@ -79,6 +84,7 @@ namespace Arkanoid
             {
                 elapsedMs = ArkanoidConstants.TimerInterval;
             }
+
             lastUpdate = now;
 
             engine.Update();
@@ -108,7 +114,9 @@ namespace Arkanoid
             }
 
             if (engine.PowerUps.Count > 0)
+            {
                 needRedraw = true;
+            }
 
             if (lastScore != engine.GameState.Score || lastLives != engine.GameState.Lives)
             {
@@ -119,7 +127,9 @@ namespace Arkanoid
 
             if (engine.GameState.IsPaused || engine.GameState.IsGameOver ||
                 engine.GameState.IsGameWon || !engine.IsBallLaunched)
+            {
                 needRedraw = true;
+            }
 
             if (needRedraw)
             {
@@ -134,7 +144,10 @@ namespace Arkanoid
 
         private void MovePlatform(int x)
         {
-            if (engine == null) return;
+            if (engine == null)
+            {
+                return;
+            }
 
             var oldX = engine.Platform.X;
             var newX = Math.Max(0, Math.Min(x - engine.Platform.Width / 2,

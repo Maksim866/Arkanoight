@@ -127,8 +127,12 @@ namespace Arkanoid.Core
 
             var allBricks = new List<(int, int)>();
             for (var r = 0; r < ArkanoidConstants.BrickRows; r++)
+            {
                 for (var c = 0; c < ArkanoidConstants.BricksPerRow; c++)
+                {
                     allBricks.Add((r, c));
+                }
+            }
 
             allBricks = allBricks.OrderBy(x => random.Next()).ToList();
 
@@ -145,7 +149,9 @@ namespace Arkanoid.Core
 
             var powerUpMap = new Dictionary<(int, int), PowerUpType>();
             for (var i = 0; i < powerUpTypes.Count; i++)
+            {
                 powerUpMap[allBricks[i]] = powerUpTypes[i];
+            }
 
             for (var r = 0; r < ArkanoidConstants.BrickRows; r++)
             {
@@ -199,7 +205,10 @@ namespace Arkanoid.Core
         /// <summary>Нормализует скорость мяча до базовой</summary>
         private void NormalizeBallSpeed(BallModel ball)
         {
-            if (ball.SpeedX == 0 && ball.SpeedY == 0) return;
+            if (ball.SpeedX == 0 && ball.SpeedY == 0)
+            {
+                return;
+            }
 
             var currentSpeed = (float)System.Math.Sqrt(ball.SpeedX * ball.SpeedX + ball.SpeedY * ball.SpeedY);
             var scale = ArkanoidConstants.BallBaseSpeed / currentSpeed;
@@ -208,35 +217,51 @@ namespace Arkanoid.Core
             ball.SpeedY = (int)(ball.SpeedY * scale);
 
             if (System.Math.Abs(ball.SpeedY) < ArkanoidConstants.MinSpeedValue)
+            {
                 ball.SpeedY = ball.SpeedY < 0 ? -ArkanoidConstants.MinSpeedValue : ArkanoidConstants.MinSpeedValue;
+            }
             if (System.Math.Abs(ball.SpeedX) < ArkanoidConstants.MinSpeedValue)
+            {
                 ball.SpeedX = ball.SpeedX < 0 ? -ArkanoidConstants.MinSpeedValue : ArkanoidConstants.MinSpeedValue;
+            }
         }
 
         /// <summary>Обновляет состояние игры. Вызывается каждый кадр.</summary>
         public void Update()
         {
-            if (gameState.IsGameOver || gameState.IsGameWon || gameState.IsPaused) return;
+            if (gameState.IsGameOver || gameState.IsGameWon || gameState.IsPaused)
+            {
+                return;
+            }
 
             // Эффекты ударов
             foreach (var brick in bricks.Where(b => b.IsHit))
             {
                 brick.HitFrames--;
-                if (brick.HitFrames <= 0) brick.IsHit = false;
+                if (brick.HitFrames <= 0)
+                {
+                    brick.IsHit = false;
+                }
             }
 
             // Широкая платформа
             if (wideTimer > 0)
             {
                 wideTimer--;
-                if (wideTimer <= 0) platform.Width = originalPlatformWidth;
+                if (wideTimer <= 0)
+                {
+                    platform.Width = originalPlatformWidth;
+                }
             }
 
             // Падающие усиления
             for (var i = powerUps.Count - 1; i >= 0; i--)
             {
                 var powerUp = powerUps[i];
-                if (!powerUp.IsActive) continue;
+                if (!powerUp.IsActive)
+                {
+                    continue;
+                }
 
                 powerUp.Y += ArkanoidConstants.PowerUpSpeed;
 
@@ -265,11 +290,17 @@ namespace Arkanoid.Core
                     }
                     else if (powerUp.Type == PowerUpType.DamageBoost)
                     {
-                        foreach (var ball in balls) ball.Damage++;
+                        foreach (var ball in balls)
+                        {
+                            ball.Damage++;
+                        }
                     }
                     else if (powerUp.Type == PowerUpType.WidePaddle)
                     {
-                        if (wideTimer <= 0) originalPlatformWidth = platform.Width;
+                        if (wideTimer <= 0)
+                        {
+                            originalPlatformWidth = platform.Width;
+                        }
                         platform.Width = ArkanoidConstants.WidePaddleWidth;
                         wideTimer = ArkanoidConstants.WidePaddleDuration;
                     }
@@ -286,7 +317,10 @@ namespace Arkanoid.Core
             for (var i = 0; i < balls.Count; i++)
             {
                 var ball = balls[i];
-                if (!ball.IsActive) continue;
+                if (!ball.IsActive)
+                {
+                    continue;
+                }
 
                 if (!gameState.IsBallLaunched)
                 {
@@ -332,14 +366,19 @@ namespace Arkanoid.Core
 
                     var newSpeedX = (int)(ArkanoidConstants.BallBaseSpeed * hitPosition * ArkanoidConstants.PlatformBounceFactor);
                     if (System.Math.Abs(newSpeedX) < ArkanoidConstants.BallMinSpeed)
+                    {
                         newSpeedX = hitPosition > 0 ? ArkanoidConstants.BallMinSpeed : -ArkanoidConstants.BallMinSpeed;
+                    }
 
                     var newSpeedY = (int)System.Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedX * newSpeedX);
                     if (newSpeedY < ArkanoidConstants.BallMinSpeed)
                     {
                         newSpeedY = ArkanoidConstants.BallMinSpeed;
                         newSpeedX = (int)System.Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedY * newSpeedY);
-                        if (hitPosition < 0) newSpeedX = -newSpeedX;
+                        if (hitPosition < 0)
+                        {
+                            newSpeedX = -newSpeedX;
+                        }
                     }
 
                     ball.SpeedX = newSpeedX;
@@ -352,7 +391,10 @@ namespace Arkanoid.Core
                 for (var j = bricks.Count - 1; j >= 0; j--)
                 {
                     var brick = bricks[j];
-                    if (!brick.IsActive) continue;
+                    if (!brick.IsActive)
+                    {
+                        continue;
+                    }
 
                     if (ball.X < brick.X + brick.Width && ball.X + ball.Size > brick.X &&
                         ball.Y < brick.Y + brick.Height && ball.Y + ball.Size > brick.Y)
@@ -386,9 +428,13 @@ namespace Arkanoid.Core
                         var minOverlap = System.Math.Min(System.Math.Min(overlapLeft, overlapRight), System.Math.Min(overlapTop, overlapBottom));
 
                         if (minOverlap == overlapLeft || minOverlap == overlapRight)
+                        {
                             ball.SpeedX = -ball.SpeedX;
+                        }
                         else
+                        {
                             ball.SpeedY = -ball.SpeedY;
+                        }
 
                         NormalizeBallSpeed(ball);
                         break;
@@ -412,7 +458,10 @@ namespace Arkanoid.Core
                 else
                 {
                     gameState.IsBallLaunched = false;
-                    for (var i = balls.Count - 1; i > 0; i--) balls.RemoveAt(i);
+                    for (var i = balls.Count - 1; i > 0; i--)
+                    {
+                        balls.RemoveAt(i);
+                    }
                     balls[0].X = platform.X + platform.Width / 2 - balls[0].Size / 2;
                     balls[0].Y = platform.Y - balls[0].Size - ArkanoidConstants.BallPlatformOffset;
                     balls[0].SpeedX = 0;
@@ -423,7 +472,9 @@ namespace Arkanoid.Core
 
             // Победа
             if (bricks.All(b => !b.IsActive))
+            {
                 gameState.IsGameWon = true;
+            }
         }
 
         /// <summary>Устанавливает платформу в указанную позицию</summary>
@@ -432,17 +483,24 @@ namespace Arkanoid.Core
             var newX = System.Math.Max(0, System.Math.Min(x, gameState.GameWidth - platform.Width));
             platform.X = newX;
             if (!gameState.IsBallLaunched && balls.Count > 0)
+            {
                 balls[0].X = platform.X + platform.Width / 2 - balls[0].Size / 2;
+            }
         }
 
         /// <summary>Переключает состояние паузы (вкл/выкл)</summary>
         public void TogglePause()
         {
             if (!gameState.IsGameOver && !gameState.IsGameWon && gameState.IsBallLaunched)
+            {
                 gameState.IsPaused = !gameState.IsPaused;
+            }
         }
 
         /// <summary>Принудительно завершает игру</summary>
-        public void GameOver() => gameState.IsGameOver = true;
+        public void GameOver()
+        {
+            gameState.IsGameOver = true;
+        }
     }
 }

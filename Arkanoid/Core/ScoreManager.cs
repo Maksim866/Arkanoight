@@ -1,4 +1,5 @@
-﻿
+﻿using System.Collections.Generic;
+using System.Linq;
 using Arkanoid.Models;
 
 namespace Arkanoid.Core
@@ -8,10 +9,9 @@ namespace Arkanoid.Core
     /// </summary>
     public static class ScoreManager
     {
-
         private static List<ScoreRecord> scores = new List<ScoreRecord>();
 
-        /// <summary>Сбрасывает рекорды</summary>
+        /// <summary>Сбрасывает все рекорды</summary>
         public static void ResetScores()
         {
             scores.Clear();
@@ -20,13 +20,12 @@ namespace Arkanoid.Core
         /// <summary>Добавляет новый рекорд</summary>
         public static void AddScore(string name, int score, int lives, string type)
         {
-
             scores.Add(new ScoreRecord
             {
                 PlayerName = name,
                 Score = score,
                 Lives = lives,
-                Date = DateTime.Now,
+                Date = System.DateTime.Now,
                 GameEndType = type
             });
 
@@ -34,6 +33,9 @@ namespace Arkanoid.Core
         }
 
         /// <summary>Получает все рекорды (отсортированные по убыванию)</summary>
-        public static List<ScoreRecord> GetScores() => scores.OrderByDescending(s => s.Score).ToList();
+        public static List<ScoreRecord> GetScores()
+        {
+            return scores.OrderByDescending(s => s.Score).ToList();
+        }
     }
 }
