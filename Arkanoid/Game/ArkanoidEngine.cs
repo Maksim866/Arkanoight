@@ -134,6 +134,7 @@ namespace Arkanoid.Core
 
             var powerUpTypes = new List<PowerUpType>();
             var powerUpCount = (int)(allBricks.Count * ArkanoidConstants.PowerUpChance);
+
             for (var i = 0; i < powerUpCount / 3; i++)
             {
                 powerUpTypes.Add(PowerUpType.ExtraBall);
@@ -185,7 +186,8 @@ namespace Arkanoid.Core
                 gameState.IsBallLaunched = true;
                 foreach (var ball in balls.Where(b => b.IsActive && b.SpeedX == 0 && b.SpeedY == 0))
                 {
-                    var angle = (random.NextDouble() * 10 - 5) * System.Math.PI / 180;
+                    var angle = (random.NextDouble() * (ArkanoidConstants.MaxLaunchAngle * 2) - ArkanoidConstants.MaxLaunchAngle)
+                        * System.Math.PI / ArkanoidConstants.DegreesToRadiansDivisor;
                     ball.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * System.Math.Sin(angle));
                     ball.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * System.Math.Cos(angle));
 
@@ -205,10 +207,10 @@ namespace Arkanoid.Core
             ball.SpeedX = (int)(ball.SpeedX * scale);
             ball.SpeedY = (int)(ball.SpeedY * scale);
 
-            if (System.Math.Abs(ball.SpeedY) < 1)
-                ball.SpeedY = ball.SpeedY < 0 ? -1 : 1;
-            if (System.Math.Abs(ball.SpeedX) < 1)
-                ball.SpeedX = ball.SpeedX < 0 ? -1 : 1;
+            if (System.Math.Abs(ball.SpeedY) < ArkanoidConstants.MinSpeedValue)
+                ball.SpeedY = ball.SpeedY < 0 ? -ArkanoidConstants.MinSpeedValue : ArkanoidConstants.MinSpeedValue;
+            if (System.Math.Abs(ball.SpeedX) < ArkanoidConstants.MinSpeedValue)
+                ball.SpeedX = ball.SpeedX < 0 ? -ArkanoidConstants.MinSpeedValue : ArkanoidConstants.MinSpeedValue;
         }
 
         /// <summary>Обновляет состояние игры. Вызывается каждый кадр.</summary>
@@ -253,7 +255,8 @@ namespace Arkanoid.Core
                         };
                         if (gameState.IsBallLaunched)
                         {
-                            var angle = (random.NextDouble() * 20 - 10) * System.Math.PI / 180;
+                            var angle = (random.NextDouble() * (ArkanoidConstants.MaxPowerUpAngle * 2) - ArkanoidConstants.MaxPowerUpAngle)
+                                * System.Math.PI / ArkanoidConstants.DegreesToRadiansDivisor;
                             newBall.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * System.Math.Sin(angle));
                             newBall.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * System.Math.Cos(angle));
                             NormalizeBallSpeed(newBall);

@@ -5,6 +5,7 @@
     /// </summary>
     public static class ArkanoidConstants
     {
+        // === Платформа ===
         /// <summary>Ширина платформы по умолчанию</summary>
         public const int PlatformWidth = 100;
         /// <summary>Высота платформы</summary>
@@ -18,6 +19,7 @@
         /// <summary>Длительность усиления широкой платформы (в кадрах)</summary>
         public const int WidePaddleDuration = 180;
 
+        // === Мяч ===
         /// <summary>Размер мяча</summary>
         public const int BallSize = 15;
         /// <summary>Базовая скорость мяча</summary>
@@ -27,6 +29,7 @@
         /// <summary>Расстояние между мячом и платформой</summary>
         public const int BallPlatformOffset = 5;
 
+        // === Кирпичи ===
         /// <summary>Ширина кирпича</summary>
         public const int BrickWidth = 60;
         /// <summary>Высота кирпича</summary>
@@ -40,9 +43,11 @@
         /// <summary>Очки за уничтожение кирпича</summary>
         public const int PointsPerBrick = 10;
 
+        // === Здоровье кирпичей по рядам ===
         /// <summary>Здоровье кирпичей для каждого ряда (сверху вниз)</summary>
         public static readonly int[] BrickHealthByRow = { 5, 4, 3, 2, 1 };
 
+        // === Игровые параметры ===
         /// <summary>Начальное количество жизней</summary>
         public const int StartLives = 3;
         /// <summary>Коэффициент отскока от платформы</summary>
@@ -50,6 +55,7 @@
         /// <summary>Длительность эффекта удара (в кадрах)</summary>
         public const int HitEffectDuration = 5;
 
+        // === Усиления ===
         /// <summary>Размер квадратика усиления</summary>
         public const int PowerUpSize = 20;
         /// <summary>Скорость падения усиления</summary>
@@ -57,6 +63,25 @@
         /// <summary>Процент кирпичей с усилениями</summary>
         public const double PowerUpChance = 0.6;
 
+        // === Углы запуска ===
+        /// <summary>Максимальный угол запуска мяча в градусах</summary>
+        public const int MaxLaunchAngle = 5;
+        /// <summary>Максимальный угол для усиления в градусах</summary>
+        public const int MaxPowerUpAngle = 10;
+        /// <summary>Делитель для перевода градусов в радианы</summary>
+        public const int DegreesToRadiansDivisor = 180;
+
+        // === Скорость ===
+        /// <summary>Порог нормализации скорости</summary>
+        public const float SpeedNormalizationThreshold = 0.5f;
+        /// <summary>Минимальное значение скорости</summary>
+        public const int MinSpeedValue = 1;
+
+        // === Таймер ===
+        /// <summary>Максимальное прошедшее время (мс)</summary>
+        public const int MaxElapsedMs = 50;
+
+        // === Окно ===
         /// <summary>Ширина окна по умолчанию</summary>
         public const int WindowWidth = 800;
         /// <summary>Высота окна по умолчанию</summary>
@@ -65,6 +90,5 @@
         public const int TimerInterval = 16;
         /// <summary>Максимальный пропуск кадров</summary>
         public const int MaxFrameSkip = 2;
-
     }
 }

@@ -75,8 +75,10 @@ namespace Arkanoid
             var now = DateTime.Now;
             var elapsedMs = (now - lastUpdate).TotalMilliseconds;
 
-            if (elapsedMs > 50) elapsedMs = ArkanoidConstants.TimerInterval;
-
+            if (elapsedMs > ArkanoidConstants.MaxElapsedMs)
+            {
+                elapsedMs = ArkanoidConstants.TimerInterval;
+            }
             lastUpdate = now;
 
             engine.Update();
