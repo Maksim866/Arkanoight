@@ -1,4 +1,5 @@
-﻿
+﻿using System.Collections.Generic;
+using System.Linq;
 using Arkanoid.Models;
 
 namespace Arkanoid.Core
@@ -55,40 +56,12 @@ namespace Arkanoid.Core
     /// </summary>
     public class ArkanoidEngine : IArkanoidEngine
     {
-        // Константы настроек
-        private const int PlatformWidth = 100;
-        private const int PlatformHeight = 20;
-        private const int PlatformYOffset = 50;
-        private const int PlatformSpeed = 10;
-        private const int WidePaddleWidth = 180;
-        private const int WidePaddleDuration = 180;
-
-        private const int BallSize = 15;
-        private const int BallBaseSpeed = 8;
-        private const int BallMinSpeed = 4;
-        private const int BallPlatformOffset = 5;
-
-        private const int BrickWidth = 60;
-        private const int BrickHeight = 20;
-        private const int BricksPerRow = 10;
-        private const int BrickRows = 5;
-        private const int BrickStartY = 50;
-        private const int PointsPerBrick = 10;
-
-        private const int StartLives = 3;
-        private const float PlatformBounceFactor = 1.8f;
-        private const int HitEffectDuration = 5;
-        private const int PowerUpSize = 20;
-        private const int PowerUpSpeed = 3;
-
-        private readonly int[] BrickHealthByRow = { 5, 4, 3, 2, 1 };
-
         private PlatformModel platform;
         private List<BallModel> balls;
         private List<BrickModel> bricks;
         private List<PowerUpModel> powerUps;
         private GameStateModel gameState;
-        private Random random = new Random();
+        private System.Random random = new System.Random();
         private int wideTimer;
         private int originalPlatformWidth;
 
@@ -120,7 +93,7 @@ namespace Arkanoid.Core
             {
                 GameWidth = width,
                 GameHeight = height,
-                Lives = StartLives
+                Lives = ArkanoidConstants.StartLives
             };
             RestartGame();
         }
@@ -130,37 +103,37 @@ namespace Arkanoid.Core
         {
             platform = new PlatformModel
             {
-                X = (gameState.GameWidth - PlatformWidth) / 2,
-                Y = gameState.GameHeight - PlatformYOffset,
-                Width = PlatformWidth,
-                Height = PlatformHeight
+                X = (gameState.GameWidth - ArkanoidConstants.PlatformWidth) / 2,
+                Y = gameState.GameHeight - ArkanoidConstants.PlatformYOffset,
+                Width = ArkanoidConstants.PlatformWidth,
+                Height = ArkanoidConstants.PlatformHeight
             };
-            originalPlatformWidth = PlatformWidth;
+            originalPlatformWidth = ArkanoidConstants.PlatformWidth;
 
             balls = new List<BallModel>
             {
                 new BallModel
                 {
-                    X = (gameState.GameWidth - BallSize) / 2,
-                    Y = platform.Y - BallSize - BallPlatformOffset,
-                    Size = BallSize,
+                    X = (gameState.GameWidth - ArkanoidConstants.BallSize) / 2,
+                    Y = platform.Y - ArkanoidConstants.BallSize - ArkanoidConstants.BallPlatformOffset,
+                    Size = ArkanoidConstants.BallSize,
                     Damage = 1,
                     IsActive = true
                 }
             };
 
             bricks = new List<BrickModel>();
-            var startX = (gameState.GameWidth - BrickWidth * BricksPerRow) / 2;
+            var startX = (gameState.GameWidth - ArkanoidConstants.BrickWidth * ArkanoidConstants.BricksPerRow) / 2;
 
             var allBricks = new List<(int, int)>();
-            for (var r = 0; r < BrickRows; r++)
-                for (var c = 0; c < BricksPerRow; c++)
+            for (var r = 0; r < ArkanoidConstants.BrickRows; r++)
+                for (var c = 0; c < ArkanoidConstants.BricksPerRow; c++)
                     allBricks.Add((r, c));
 
             allBricks = allBricks.OrderBy(x => random.Next()).ToList();
 
             var powerUpTypes = new List<PowerUpType>();
-            var powerUpCount = (int)(allBricks.Count * 0.6);
+            var powerUpCount = (int)(allBricks.Count * ArkanoidConstants.PowerUpChance);
             for (var i = 0; i < powerUpCount / 3; i++)
             {
                 powerUpTypes.Add(PowerUpType.ExtraBall);
@@ -173,20 +146,20 @@ namespace Arkanoid.Core
             for (var i = 0; i < powerUpTypes.Count; i++)
                 powerUpMap[allBricks[i]] = powerUpTypes[i];
 
-            for (var r = 0; r < BrickRows; r++)
+            for (var r = 0; r < ArkanoidConstants.BrickRows; r++)
             {
-                for (var c = 0; c < BricksPerRow; c++)
+                for (var c = 0; c < ArkanoidConstants.BricksPerRow; c++)
                 {
                     var brick = new BrickModel
                     {
-                        X = startX + c * BrickWidth,
-                        Y = BrickStartY + r * BrickHeight,
-                        Width = BrickWidth,
-                        Height = BrickHeight,
+                        X = startX + c * ArkanoidConstants.BrickWidth,
+                        Y = ArkanoidConstants.BrickStartY + r * ArkanoidConstants.BrickHeight,
+                        Width = ArkanoidConstants.BrickWidth,
+                        Height = ArkanoidConstants.BrickHeight,
                         IsActive = true,
                         Row = r,
-                        Health = BrickHealthByRow[r],
-                        MaxHealth = BrickHealthByRow[r],
+                        Health = ArkanoidConstants.BrickHealthByRow[r],
+                        MaxHealth = ArkanoidConstants.BrickHealthByRow[r],
                         HasPowerUp = powerUpMap.ContainsKey((r, c)),
                         PowerUpType = powerUpMap.ContainsKey((r, c)) ? powerUpMap[(r, c)] : PowerUpType.ExtraBall
                     };
@@ -196,7 +169,7 @@ namespace Arkanoid.Core
 
             powerUps = new List<PowerUpModel>();
             gameState.Score = 0;
-            gameState.Lives = StartLives;
+            gameState.Lives = ArkanoidConstants.StartLives;
             gameState.IsGameOver = false;
             gameState.IsGameWon = false;
             gameState.IsBallLaunched = false;
@@ -212,9 +185,9 @@ namespace Arkanoid.Core
                 gameState.IsBallLaunched = true;
                 foreach (var ball in balls.Where(b => b.IsActive && b.SpeedX == 0 && b.SpeedY == 0))
                 {
-                    var angle = (random.NextDouble() * 10 - 5) * Math.PI / 180;
-                    ball.SpeedX = (int)(BallBaseSpeed * Math.Sin(angle));
-                    ball.SpeedY = -(int)(BallBaseSpeed * Math.Cos(angle));
+                    var angle = (random.NextDouble() * 10 - 5) * System.Math.PI / 180;
+                    ball.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * System.Math.Sin(angle));
+                    ball.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * System.Math.Cos(angle));
 
                     NormalizeBallSpeed(ball);
                 }
@@ -226,15 +199,15 @@ namespace Arkanoid.Core
         {
             if (ball.SpeedX == 0 && ball.SpeedY == 0) return;
 
-            var currentSpeed = (float)Math.Sqrt(ball.SpeedX * ball.SpeedX + ball.SpeedY * ball.SpeedY);
-            var scale = BallBaseSpeed / currentSpeed;
+            var currentSpeed = (float)System.Math.Sqrt(ball.SpeedX * ball.SpeedX + ball.SpeedY * ball.SpeedY);
+            var scale = ArkanoidConstants.BallBaseSpeed / currentSpeed;
 
             ball.SpeedX = (int)(ball.SpeedX * scale);
             ball.SpeedY = (int)(ball.SpeedY * scale);
 
-            if (Math.Abs(ball.SpeedY) < 1)
+            if (System.Math.Abs(ball.SpeedY) < 1)
                 ball.SpeedY = ball.SpeedY < 0 ? -1 : 1;
-            if (Math.Abs(ball.SpeedX) < 1)
+            if (System.Math.Abs(ball.SpeedX) < 1)
                 ball.SpeedX = ball.SpeedX < 0 ? -1 : 1;
         }
 
@@ -263,7 +236,7 @@ namespace Arkanoid.Core
                 var powerUp = powerUps[i];
                 if (!powerUp.IsActive) continue;
 
-                powerUp.Y += PowerUpSpeed;
+                powerUp.Y += ArkanoidConstants.PowerUpSpeed;
 
                 if (powerUp.Y + powerUp.Size >= platform.Y && powerUp.Y <= platform.Y + platform.Height &&
                     powerUp.X + powerUp.Size >= platform.X && powerUp.X <= platform.X + platform.Width)
@@ -272,17 +245,17 @@ namespace Arkanoid.Core
                     {
                         var newBall = new BallModel
                         {
-                            X = platform.X + platform.Width / 2 - BallSize / 2,
-                            Y = platform.Y - BallSize - BallPlatformOffset,
-                            Size = BallSize,
+                            X = platform.X + platform.Width / 2 - ArkanoidConstants.BallSize / 2,
+                            Y = platform.Y - ArkanoidConstants.BallSize - ArkanoidConstants.BallPlatformOffset,
+                            Size = ArkanoidConstants.BallSize,
                             Damage = balls[0].Damage,
                             IsActive = true
                         };
                         if (gameState.IsBallLaunched)
                         {
-                            var angle = (random.NextDouble() * 20 - 10) * Math.PI / 180;
-                            newBall.SpeedX = (int)(BallBaseSpeed * Math.Sin(angle));
-                            newBall.SpeedY = -(int)(BallBaseSpeed * Math.Cos(angle));
+                            var angle = (random.NextDouble() * 20 - 10) * System.Math.PI / 180;
+                            newBall.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * System.Math.Sin(angle));
+                            newBall.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * System.Math.Cos(angle));
                             NormalizeBallSpeed(newBall);
                         }
                         balls.Add(newBall);
@@ -294,8 +267,8 @@ namespace Arkanoid.Core
                     else if (powerUp.Type == PowerUpType.WidePaddle)
                     {
                         if (wideTimer <= 0) originalPlatformWidth = platform.Width;
-                        platform.Width = WidePaddleWidth;
-                        wideTimer = WidePaddleDuration;
+                        platform.Width = ArkanoidConstants.WidePaddleWidth;
+                        wideTimer = ArkanoidConstants.WidePaddleDuration;
                     }
                     powerUp.IsActive = false;
                 }
@@ -315,7 +288,7 @@ namespace Arkanoid.Core
                 if (!gameState.IsBallLaunched)
                 {
                     ball.X = platform.X + platform.Width / 2 - ball.Size / 2;
-                    ball.Y = platform.Y - ball.Size - BallPlatformOffset;
+                    ball.Y = platform.Y - ball.Size - ArkanoidConstants.BallPlatformOffset;
                     continue;
                 }
 
@@ -328,20 +301,20 @@ namespace Arkanoid.Core
                 if (ball.X <= 0)
                 {
                     ball.X = 0;
-                    ball.SpeedX = Math.Abs(ball.SpeedX);
+                    ball.SpeedX = System.Math.Abs(ball.SpeedX);
                     NormalizeBallSpeed(ball);
                 }
                 else if (ball.X + ball.Size >= gameState.GameWidth)
                 {
                     ball.X = gameState.GameWidth - ball.Size;
-                    ball.SpeedX = -Math.Abs(ball.SpeedX);
+                    ball.SpeedX = -System.Math.Abs(ball.SpeedX);
                     NormalizeBallSpeed(ball);
                 }
 
                 if (ball.Y <= 0)
                 {
                     ball.Y = 0;
-                    ball.SpeedY = Math.Abs(ball.SpeedY);
+                    ball.SpeedY = System.Math.Abs(ball.SpeedY);
                     NormalizeBallSpeed(ball);
                 }
 
@@ -352,17 +325,17 @@ namespace Arkanoid.Core
                     ball.Y = platform.Y - ball.Size;
 
                     var hitPosition = (float)(ball.X + ball.Size / 2 - (platform.X + platform.Width / 2)) / (platform.Width / 2);
-                    hitPosition = Math.Max(-1, Math.Min(1, hitPosition));
+                    hitPosition = System.Math.Max(-1, System.Math.Min(1, hitPosition));
 
-                    var newSpeedX = (int)(BallBaseSpeed * hitPosition * PlatformBounceFactor);
-                    if (Math.Abs(newSpeedX) < BallMinSpeed)
-                        newSpeedX = hitPosition > 0 ? BallMinSpeed : -BallMinSpeed;
+                    var newSpeedX = (int)(ArkanoidConstants.BallBaseSpeed * hitPosition * ArkanoidConstants.PlatformBounceFactor);
+                    if (System.Math.Abs(newSpeedX) < ArkanoidConstants.BallMinSpeed)
+                        newSpeedX = hitPosition > 0 ? ArkanoidConstants.BallMinSpeed : -ArkanoidConstants.BallMinSpeed;
 
-                    var newSpeedY = (int)Math.Sqrt(BallBaseSpeed * BallBaseSpeed - newSpeedX * newSpeedX);
-                    if (newSpeedY < BallMinSpeed)
+                    var newSpeedY = (int)System.Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedX * newSpeedX);
+                    if (newSpeedY < ArkanoidConstants.BallMinSpeed)
                     {
-                        newSpeedY = BallMinSpeed;
-                        newSpeedX = (int)Math.Sqrt(BallBaseSpeed * BallBaseSpeed - newSpeedY * newSpeedY);
+                        newSpeedY = ArkanoidConstants.BallMinSpeed;
+                        newSpeedX = (int)System.Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedY * newSpeedY);
                         if (hitPosition < 0) newSpeedX = -newSpeedX;
                     }
 
@@ -383,22 +356,22 @@ namespace Arkanoid.Core
                     {
                         brick.Health -= ball.Damage;
                         brick.IsHit = true;
-                        brick.HitFrames = HitEffectDuration;
+                        brick.HitFrames = ArkanoidConstants.HitEffectDuration;
 
                         if (brick.Health <= 0)
                         {
                             brick.IsActive = false;
-                            gameState.Score += PointsPerBrick * brick.MaxHealth;
+                            gameState.Score += ArkanoidConstants.PointsPerBrick * brick.MaxHealth;
                             if (brick.HasPowerUp)
                             {
                                 powerUps.Add(new PowerUpModel
                                 {
-                                    X = brick.X + brick.Width / 2 - PowerUpSize / 2,
+                                    X = brick.X + brick.Width / 2 - ArkanoidConstants.PowerUpSize / 2,
                                     Y = brick.Y,
-                                    Size = PowerUpSize,
+                                    Size = ArkanoidConstants.PowerUpSize,
                                     Type = brick.PowerUpType,
                                     IsActive = true,
-                                    SpeedY = PowerUpSpeed
+                                    SpeedY = ArkanoidConstants.PowerUpSpeed
                                 });
                             }
                         }
@@ -407,7 +380,7 @@ namespace Arkanoid.Core
                         var overlapRight = brick.X + brick.Width - ball.X;
                         var overlapTop = ball.Y + ball.Size - brick.Y;
                         var overlapBottom = brick.Y + brick.Height - ball.Y;
-                        var minOverlap = Math.Min(Math.Min(overlapLeft, overlapRight), Math.Min(overlapTop, overlapBottom));
+                        var minOverlap = System.Math.Min(System.Math.Min(overlapLeft, overlapRight), System.Math.Min(overlapTop, overlapBottom));
 
                         if (minOverlap == overlapLeft || minOverlap == overlapRight)
                             ball.SpeedX = -ball.SpeedX;
@@ -438,7 +411,7 @@ namespace Arkanoid.Core
                     gameState.IsBallLaunched = false;
                     for (var i = balls.Count - 1; i > 0; i--) balls.RemoveAt(i);
                     balls[0].X = platform.X + platform.Width / 2 - balls[0].Size / 2;
-                    balls[0].Y = platform.Y - balls[0].Size - BallPlatformOffset;
+                    balls[0].Y = platform.Y - balls[0].Size - ArkanoidConstants.BallPlatformOffset;
                     balls[0].SpeedX = 0;
                     balls[0].SpeedY = 0;
                     balls[0].IsActive = true;
@@ -453,7 +426,7 @@ namespace Arkanoid.Core
         /// <summary>Устанавливает платформу в указанную позицию</summary>
         public void SetPlatformPosition(int x)
         {
-            var newX = Math.Max(0, Math.Min(x, gameState.GameWidth - platform.Width));
+            var newX = System.Math.Max(0, System.Math.Min(x, gameState.GameWidth - platform.Width));
             platform.X = newX;
             if (!gameState.IsBallLaunched && balls.Count > 0)
                 balls[0].X = platform.X + platform.Width / 2 - balls[0].Size / 2;

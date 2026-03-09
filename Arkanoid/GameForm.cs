@@ -5,9 +5,6 @@ using Arkanoid.Views;
 
 namespace Arkanoid
 {
-    /// <summary>
-    /// Главная форма приложения
-    /// </summary>
     public partial class GameForm : Form
     {
         private IArkanoidEngine engine;
@@ -18,12 +15,9 @@ namespace Arkanoid
         private int lastLives = -1;
 
         private int frameSkip;
-        private const int MaxFrameSkip = 2;
-        private const int TickInterval = 16;
 
         private DateTime lastUpdate = DateTime.Now;
 
-        /// <summary>Инициализирует новый экземпляр главной формы</summary>
         public GameForm()
         {
             ScoreManager.ResetScores();
@@ -32,18 +26,16 @@ namespace Arkanoid
             Load += (s, e) => Focus();
         }
 
-        /// <summary>Инициализирует компоненты формы</summary>
         private void InitializeForm()
         {
             Text = "Арканоид";
-            Size = new System.Drawing.Size(800, 600);
+            Size = new System.Drawing.Size(ArkanoidConstants.WindowWidth, ArkanoidConstants.WindowHeight);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             KeyPreview = true;
         }
 
-        /// <summary>Инициализирует игровые компоненты</summary>
         private void InitializeGame()
         {
             engine = new ArkanoidEngine(ClientSize.Width, ClientSize.Height);
@@ -67,7 +59,7 @@ namespace Arkanoid
             GameVisuals.Render(engine, canvas.ClientSize);
 
             gameTimer = new System.Windows.Forms.Timer();
-            gameTimer.Interval = TickInterval;
+            gameTimer.Interval = ArkanoidConstants.TimerInterval;
             gameTimer.Tick += GameTimer_Tick;
             gameTimer.Start();
 
@@ -76,7 +68,6 @@ namespace Arkanoid
             GC.Collect();
         }
 
-        /// <summary>Обработчик тика таймера</summary>
         private void GameTimer_Tick(object sender, EventArgs e)
         {
             if (engine == null) return;
@@ -84,7 +75,7 @@ namespace Arkanoid
             var now = DateTime.Now;
             var elapsedMs = (now - lastUpdate).TotalMilliseconds;
 
-            if (elapsedMs > 50) elapsedMs = TickInterval;
+            if (elapsedMs > 50) elapsedMs = ArkanoidConstants.TimerInterval;
 
             lastUpdate = now;
 
@@ -110,7 +101,7 @@ namespace Arkanoid
 
             if (engine.IsBallLaunched)
             {
-                frameSkip = (frameSkip + 1) % MaxFrameSkip;
+                frameSkip = (frameSkip + 1) % ArkanoidConstants.MaxFrameSkip;
                 needRedraw = (frameSkip == 0);
             }
 
@@ -139,7 +130,6 @@ namespace Arkanoid
             }
         }
 
-        /// <summary>Перемещает платформу за курсором мыши</summary>
         private void MovePlatform(int x)
         {
             if (engine == null) return;
@@ -155,7 +145,6 @@ namespace Arkanoid
             }
         }
 
-        /// <summary>Обработчик нажатия клавиш</summary>
         private void GameForm_KeyDown(object sender, KeyEventArgs e)
         {
             var needRedraw = false;
@@ -192,7 +181,6 @@ namespace Arkanoid
             }
         }
 
-        /// <summary>Обработка изменения размера формы</summary>
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
