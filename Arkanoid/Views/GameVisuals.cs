@@ -1,4 +1,7 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
+using System.ComponentModel;
 using Arkanoid.Core.Interfaces;
 using Arkanoid.Core.Enums;
 using Arkanoid.Core.Managers;
@@ -46,7 +49,6 @@ namespace Arkanoid.Views
         // Буфер
         private static Bitmap buffer;
         private static int lastWidth, lastHeight;
-        private static bool bufferDirty = true;
         private static Control targetControl;
 
         static GameVisuals()
@@ -77,7 +79,6 @@ namespace Arkanoid.Views
             buffer = new Bitmap(width, height);
             lastWidth = width;
             lastHeight = height;
-            bufferDirty = true;
         }
 
         public static void DrawToBuffer(IArkanoidEngine engine, Size clientSize)
@@ -179,8 +180,6 @@ namespace Arkanoid.Views
                     DrawGameOverScreen(graphics, engine, clientSize);
                 }
             }
-
-            bufferDirty = false;
         }
 
         private static void DrawPauseScreen(Graphics graphics, Size clientSize)
@@ -320,48 +319,6 @@ namespace Arkanoid.Views
             cyanPen3.Dispose();
             goldPen2.Dispose();
             whitePen1.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Контрол для отображения игры
-    /// </summary>
-    public class GameCanvas : Control
-    {
-        private IArkanoidEngine engine;
-
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [Browsable(false)]
-        public IArkanoidEngine GameEngine
-        {
-            get => engine;
-            set { engine = value; }
-        }
-
-        public GameCanvas()
-        {
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-
-            if (engine != null)
-            {
-                GameVisuals.Initialize(this, ClientSize.Width, ClientSize.Height);
-                GameVisuals.DrawToBuffer(engine, ClientSize);
-                GameVisuals.RefreshDisplay();
-            }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                GameVisuals.Cleanup();
-            }
-            base.Dispose(disposing);
         }
     }
 }
