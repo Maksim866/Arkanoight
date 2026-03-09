@@ -1,6 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-using Arkanoid.Core.Interfaces;
+﻿using Arkanoid.Core.Interfaces;
 using Arkanoid.Core.Engine;
 using Arkanoid.Core.Managers;
 using Arkanoid.Core.Constants;
@@ -8,6 +6,9 @@ using Arkanoid.Views;
 
 namespace Arkanoid
 {
+    /// <summary>
+    /// Главная форма приложения
+    /// </summary>
     public partial class GameForm : Form
     {
         private IArkanoidEngine engine;
@@ -21,6 +22,9 @@ namespace Arkanoid
 
         private DateTime lastUpdate = DateTime.Now;
 
+        /// <summary>
+        /// Инициализирует новый экземпляр главной формы
+        /// </summary>
         public GameForm()
         {
             ScoreManager.ResetScores();
@@ -70,7 +74,6 @@ namespace Arkanoid
 
             KeyDown += GameForm_KeyDown;
 
-            GC.Collect();
         }
 
         private void GameTimer_Tick(object sender, EventArgs e)
@@ -138,11 +141,6 @@ namespace Arkanoid
             {
                 GameVisuals.Render(engine, canvas.ClientSize);
             }
-
-            if (frameSkip == 0 && DateTime.Now.Millisecond % 1000 < 20)
-            {
-                GC.Collect(0, GCCollectionMode.Forced, false);
-            }
         }
 
         private void MovePlatform(int x)
@@ -176,8 +174,6 @@ namespace Arkanoid
                 lastLives = -1;
                 needRedraw = true;
                 Focus();
-
-                GC.Collect();
             }
             else if (e.KeyCode == Keys.X)
             {
@@ -206,8 +202,6 @@ namespace Arkanoid
             {
                 GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
                 GameVisuals.Render(engine, canvas.ClientSize);
-
-                GC.Collect();
             }
         }
     }

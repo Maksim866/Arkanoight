@@ -66,6 +66,9 @@ namespace Arkanoid.Views
             }
         }
 
+        /// <summary>
+        /// Инициализирует буфер для отрисовки заданного размера и привязывает его к контролу
+        /// </summary>
         public static void Initialize(Control control, int width, int height)
         {
             targetControl = control;
@@ -81,6 +84,9 @@ namespace Arkanoid.Views
             lastHeight = height;
         }
 
+        /// <summary>
+        /// Отрисовывает текущее состояние игры в буфер
+        /// </summary>
         public static void DrawToBuffer(IArkanoidEngine engine, Size clientSize)
         {
             if (buffer == null)
@@ -274,6 +280,9 @@ namespace Arkanoid.Views
             }
         }
 
+        /// <summary>
+        /// Обновляет отображение, копируя буфер на экран
+        /// </summary>
         public static void RefreshDisplay()
         {
             if (targetControl != null && buffer != null && !targetControl.IsDisposed)
@@ -285,6 +294,9 @@ namespace Arkanoid.Views
             }
         }
 
+        /// <summary>
+        /// Полностью перерисовывает и отображает игру
+        /// </summary>
         public static void Render(IArkanoidEngine engine, Size clientSize)
         {
             if (buffer == null)
@@ -296,6 +308,9 @@ namespace Arkanoid.Views
             RefreshDisplay();
         }
 
+        /// <summary>
+        /// Освобождает все кэшированные ресурсы (кисти, перья, шрифты, буфер)
+        /// </summary>
         public static void Cleanup()
         {
             buffer?.Dispose();
