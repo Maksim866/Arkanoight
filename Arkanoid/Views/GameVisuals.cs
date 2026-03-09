@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Windows.Forms;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.ComponentModel;
 using Arkanoid.Core.Interfaces;
-using Arkanoid.Core.Models;
 using Arkanoid.Core.Enums;
 using Arkanoid.Core.Managers;
 
@@ -17,8 +11,8 @@ namespace Arkanoid.Views
     public static class GameVisuals
     {
         // Цвета
-        private static readonly Color[] BrickColors = { Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue };
-        private static readonly Color[] HitColors = {
+        private static readonly Color[] brickColors = { Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue };
+        private static readonly Color[] hitColors = {
             Color.FromArgb(255, 255, 150, 150),
             Color.FromArgb(255, 255, 200, 150),
             Color.FromArgb(255, 255, 255, 150),
@@ -71,16 +65,16 @@ namespace Arkanoid.Views
         /// <summary>Статический конструктор для инициализации массивов кистей</summary>
         static GameVisuals()
         {
-            brickBrushes = new SolidBrush[BrickColors.Length];
-            for (var i = 0; i < BrickColors.Length; i++)
+            brickBrushes = new SolidBrush[brickColors.Length];
+            for (var i = 0; i < brickColors.Length; i++)
             {
-                brickBrushes[i] = new SolidBrush(BrickColors[i]);
+                brickBrushes[i] = new SolidBrush(brickColors[i]);
             }
 
-            hitBrushes = new SolidBrush[HitColors.Length];
-            for (var i = 0; i < HitColors.Length; i++)
+            hitBrushes = new SolidBrush[hitColors.Length];
+            for (var i = 0; i < hitColors.Length; i++)
             {
-                hitBrushes[i] = new SolidBrush(HitColors[i]);
+                hitBrushes[i] = new SolidBrush(hitColors[i]);
             }
         }
 

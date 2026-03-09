@@ -1,5 +1,4 @@
-﻿
-using Arkanoid.Core.Models;
+﻿using Arkanoid.Core.Models;
 
 namespace Arkanoid.Core.Managers
 {

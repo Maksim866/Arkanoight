@@ -1,5 +1,4 @@
-﻿
-using Arkanoid.Core.Interfaces;
+﻿using Arkanoid.Core.Interfaces;
 using Arkanoid.Core.Models;
 using Arkanoid.Core.Enums;
 using Arkanoid.Core.Constants;
