@@ -26,7 +26,7 @@ namespace Arkanoight
         /// <summary>Инициализирует новый экземпляр главной формы</summary>
         public GameForm()
         {
-            ScoreManager.LoadScores();
+            ScoreManager.ResetScores();
             InitializeForm();
             InitializeGame();
             Load += (s, e) => Focus();
@@ -72,7 +72,6 @@ namespace Arkanoight
             gameTimer.Start();
 
             KeyDown += GameForm_KeyDown;
-            FormClosing += (s, e) => ScoreManager.SaveScores();
 
             GC.Collect();
         }
