@@ -1,9 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using System.ComponentModel;
-using Arkanoid.Core;
-using Arkanoid.Models;
+using System.Linq;
+using Arkanoid.Core.Interfaces;
+using Arkanoid.Core.Models;
+using Arkanoid.Core.Enums;
+using Arkanoid.Core.Managers;
 
 namespace Arkanoid.Views
 {
@@ -69,11 +73,15 @@ namespace Arkanoid.Views
         {
             brickBrushes = new SolidBrush[BrickColors.Length];
             for (var i = 0; i < BrickColors.Length; i++)
+            {
                 brickBrushes[i] = new SolidBrush(BrickColors[i]);
+            }
 
             hitBrushes = new SolidBrush[HitColors.Length];
             for (var i = 0; i < HitColors.Length; i++)
+            {
                 hitBrushes[i] = new SolidBrush(HitColors[i]);
+            }
         }
 
         /// <summary>Инициализирует буфер и привязывает к контролу</summary>
@@ -82,7 +90,9 @@ namespace Arkanoid.Views
             targetControl = control;
 
             if (buffer != null && lastWidth == width && lastHeight == height)
+            {
                 return;
+            }
 
             buffer?.Dispose();
             buffer = new Bitmap(width, height);
@@ -94,7 +104,10 @@ namespace Arkanoid.Views
         /// <summary>Рисует игру в буфер</summary>
         public static void DrawToBuffer(IArkanoidEngine engine, Size clientSize)
         {
-            if (buffer == null) return;
+            if (buffer == null)
+            {
+                return;
+            }
 
             using (var graphics = Graphics.FromImage(buffer))
             {
@@ -105,7 +118,9 @@ namespace Arkanoid.Views
 
                 // Мячи
                 foreach (var ball in engine.Balls.Where(b => b.IsActive))
+                {
                     graphics.FillEllipse(ballBrush, ball.X, ball.Y, ball.Size, ball.Size);
+                }
 
                 // Кирпичи
                 foreach (var brick in engine.Bricks.Where(b => b.IsActive))
@@ -115,9 +130,13 @@ namespace Arkanoid.Views
                     graphics.DrawRectangle(borderPen, brick.X, brick.Y, brick.Width, brick.Height);
 
                     if (brick.Health < brick.MaxHealth)
+                    {
                         for (var i = 0; i < brick.MaxHealth - brick.Health; i++)
+                        {
                             graphics.DrawLine(damagePen, brick.X + 10 + i * 10, brick.Y + 5,
                                 brick.X + brick.Width - 10 - i * 10, brick.Y + brick.Height - 5);
+                        }
+                    }
                 }
 
                 // Усиления
@@ -157,17 +176,22 @@ namespace Arkanoid.Views
 
                 // Специальные экраны
                 if (engine.GameState.IsPaused)
+                {
                     DrawPauseScreen(graphics, clientSize);
+                }
                 else if (!engine.IsBallLaunched && !engine.GameState.IsGameOver && !engine.GameState.IsGameWon)
+                {
                     DrawStartScreen(graphics, clientSize);
+                }
                 else if (engine.GameState.IsGameOver || engine.GameState.IsGameWon)
+                {
                     DrawGameOverScreen(graphics, engine, clientSize);
+                }
             }
 
             bufferDirty = false;
         }
 
-        /// <summary>Рисует экран паузы</summary>
         private static void DrawPauseScreen(Graphics graphics, Size clientSize)
         {
             graphics.FillRectangle(pauseBgBrush, 0, 0, clientSize.Width, clientSize.Height);
@@ -179,7 +203,6 @@ namespace Arkanoid.Views
                 clientSize.Height / 2 + 30);
         }
 
-        /// <summary>Рисует стартовый экран с подсказками</summary>
         private static void DrawStartScreen(Graphics graphics, Size clientSize)
         {
             var boxWidth = 600;
@@ -218,13 +241,13 @@ namespace Arkanoid.Views
                 graphics.DrawString(types[i].Item2, symbolFont, blackBrush, textX, textY);
 
                 graphics.DrawString(types[i].Item3, powerFont, whiteBrush, boxX + 75, squareY + 5);
-                graphics.DrawString(i == 0 ? "(появляется на платформе)" :
-                                   i == 1 ? "(суммируется)" : "(временный эффект)",
-                                   powerFont, whiteBrush, boxX + 75, squareY + 22);
+
+                string additionalText = i == 0 ? "(появляется на платформе)" :
+                                       i == 1 ? "(суммируется)" : "(временный эффект)";
+                graphics.DrawString(additionalText, powerFont, whiteBrush, boxX + 75, squareY + 22);
             }
         }
 
-        /// <summary>Рисует экран окончания игры с таблицей рекордов</summary>
         private static void DrawGameOverScreen(Graphics graphics, IArkanoidEngine engine, Size clientSize)
         {
             var scores = ScoreManager.GetScores();
@@ -247,19 +270,25 @@ namespace Arkanoid.Views
             {
                 graphics.DrawString("Пока нет рекордов", italicFont, whiteBrush, boardX + 110, boardY + 120);
             }
-            else for (var i = 0; i < scores.Count; i++)
+            else
             {
-                var yPos = boardY + 80 + i * 20;
-                graphics.DrawString($"{i + 1}. {scores[i].PlayerName}", scoreboardFont, whiteBrush, boardX + 20, yPos);
-                graphics.DrawString(scores[i].Score.ToString(), scoreboardFont, whiteBrush, boardX + 200, yPos);
+                for (var i = 0; i < scores.Count; i++)
+                {
+                    var yPos = boardY + 80 + i * 20;
+                    graphics.DrawString($"{i + 1}. {scores[i].PlayerName}", scoreboardFont, whiteBrush, boardX + 20, yPos);
+                    graphics.DrawString(scores[i].Score.ToString(), scoreboardFont, whiteBrush, boardX + 200, yPos);
 
-                var typeBrush = scores[i].GameEndType == "Победа" ? goldBrush : redBrush;
-                graphics.DrawString(scores[i].GameEndType, scoreboardFont, typeBrush, boardX + 280, yPos);
+                    var typeBrush = scores[i].GameEndType == "Победа" ? goldBrush : redBrush;
+                    graphics.DrawString(scores[i].GameEndType, scoreboardFont, typeBrush, boardX + 280, yPos);
+                }
             }
         }
 
         /// <summary>Помечает буфер как устаревший (требующий перерисовки)</summary>
-        public static void MarkDirty() => bufferDirty = true;
+        public static void MarkDirty()
+        {
+            bufferDirty = true;
+        }
 
         /// <summary>Принудительно обновляет отображение из буфера</summary>
         public static void RefreshDisplay()
@@ -276,7 +305,10 @@ namespace Arkanoid.Views
         /// <summary>Полностью перерисовывает и отображает игру</summary>
         public static void Render(IArkanoidEngine engine, Size clientSize)
         {
-            if (buffer == null) return;
+            if (buffer == null)
+            {
+                return;
+            }
 
             DrawToBuffer(engine, clientSize);
             RefreshDisplay();
@@ -319,8 +351,14 @@ namespace Arkanoid.Views
             scoreboardFont.Dispose();
             italicFont.Dispose();
 
-            foreach (var brush in brickBrushes) brush.Dispose();
-            foreach (var brush in hitBrushes) brush.Dispose();
+            foreach (var brush in brickBrushes)
+            {
+                brush.Dispose();
+            }
+            foreach (var brush in hitBrushes)
+            {
+                brush.Dispose();
+            }
         }
     }
 

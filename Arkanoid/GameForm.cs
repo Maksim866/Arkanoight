@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Windows.Forms;
-using Arkanoid.Core;
+using Arkanoid.Core.Interfaces;
+using Arkanoid.Core.Engine;
+using Arkanoid.Core.Managers;
+using Arkanoid.Core.Constants;
 using Arkanoid.Views;
 
 namespace Arkanoid

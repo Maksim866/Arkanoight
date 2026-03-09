@@ -1,55 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Arkanoid.Models;
+﻿
+using Arkanoid.Core.Interfaces;
+using Arkanoid.Core.Models;
+using Arkanoid.Core.Enums;
+using Arkanoid.Core.Constants;
 
-namespace Arkanoid.Core
+namespace Arkanoid.Core.Engine
 {
-    /// <summary>
-    /// Интерфейс игрового движка. Определяет контракт для всей игровой логики.
-    /// </summary>
-    public interface IArkanoidEngine
-    {
-        /// <summary>Получает модель платформы с текущими координатами и размерами</summary>
-        PlatformModel Platform { get; }
-
-        /// <summary>Получает список всех активных мячей в игре</summary>
-        List<BallModel> Balls { get; }
-
-        /// <summary>Получает текущее состояние игры (счет, жизни, флаги)</summary>
-        GameStateModel GameState { get; }
-
-        /// <summary>Получает список всех кирпичей на игровом поле</summary>
-        IReadOnlyList<BrickModel> Bricks { get; }
-
-        /// <summary>Получает список всех падающих усилений</summary>
-        List<PowerUpModel> PowerUps { get; }
-
-        /// <summary>Получает флаг, указывающий, запущен ли хотя бы один мяч</summary>
-        bool IsBallLaunched { get; }
-
-        /// <summary>Получает флаг, указывающий, находится ли игра на паузе</summary>
-        bool IsPaused { get; }
-
-        /// <summary>Обновляет состояние игры. Вызывается каждый кадр.</summary>
-        void Update();
-
-        /// <summary>Устанавливает платформу в указанную позицию по X</summary>
-        /// <param name="x">Новая координата X для платформы</param>
-        void SetPlatformPosition(int x);
-
-        /// <summary>Запускает все мячи с платформы</summary>
-        void LaunchBall();
-
-        /// <summary>Полностью перезапускает игру (начальное состояние)</summary>
-        void RestartGame();
-
-        /// <summary>Переключает состояние паузы (вкл/выкл)</summary>
-        void TogglePause();
-
-        /// <summary>Принудительно завершает игру (проигрыш)</summary>
-        void GameOver();
-    }
-
     /// <summary>
     /// Игровой движок арканоида. Содержит всю логику игры: физику, столкновения, 
     /// подсчет очков, управление усилениями и дополнительными мячами.
@@ -61,7 +17,7 @@ namespace Arkanoid.Core
         private List<BrickModel> bricks;
         private List<PowerUpModel> powerUps;
         private GameStateModel gameState;
-        private System.Random random = new System.Random();
+        private Random random = new Random();
         private int wideTimer;
         private int originalPlatformWidth;
 
@@ -193,9 +149,9 @@ namespace Arkanoid.Core
                 foreach (var ball in balls.Where(b => b.IsActive && b.SpeedX == 0 && b.SpeedY == 0))
                 {
                     var angle = (random.NextDouble() * (ArkanoidConstants.MaxLaunchAngle * 2) - ArkanoidConstants.MaxLaunchAngle)
-                        * System.Math.PI / ArkanoidConstants.DegreesToRadiansDivisor;
-                    ball.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * System.Math.Sin(angle));
-                    ball.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * System.Math.Cos(angle));
+                        * Math.PI / ArkanoidConstants.DegreesToRadiansDivisor;
+                    ball.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * Math.Sin(angle));
+                    ball.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * Math.Cos(angle));
 
                     NormalizeBallSpeed(ball);
                 }
@@ -210,17 +166,17 @@ namespace Arkanoid.Core
                 return;
             }
 
-            var currentSpeed = (float)System.Math.Sqrt(ball.SpeedX * ball.SpeedX + ball.SpeedY * ball.SpeedY);
+            var currentSpeed = (float)Math.Sqrt(ball.SpeedX * ball.SpeedX + ball.SpeedY * ball.SpeedY);
             var scale = ArkanoidConstants.BallBaseSpeed / currentSpeed;
 
             ball.SpeedX = (int)(ball.SpeedX * scale);
             ball.SpeedY = (int)(ball.SpeedY * scale);
 
-            if (System.Math.Abs(ball.SpeedY) < ArkanoidConstants.MinSpeedValue)
+            if (Math.Abs(ball.SpeedY) < ArkanoidConstants.MinSpeedValue)
             {
                 ball.SpeedY = ball.SpeedY < 0 ? -ArkanoidConstants.MinSpeedValue : ArkanoidConstants.MinSpeedValue;
             }
-            if (System.Math.Abs(ball.SpeedX) < ArkanoidConstants.MinSpeedValue)
+            if (Math.Abs(ball.SpeedX) < ArkanoidConstants.MinSpeedValue)
             {
                 ball.SpeedX = ball.SpeedX < 0 ? -ArkanoidConstants.MinSpeedValue : ArkanoidConstants.MinSpeedValue;
             }
@@ -281,9 +237,9 @@ namespace Arkanoid.Core
                         if (gameState.IsBallLaunched)
                         {
                             var angle = (random.NextDouble() * (ArkanoidConstants.MaxPowerUpAngle * 2) - ArkanoidConstants.MaxPowerUpAngle)
-                                * System.Math.PI / ArkanoidConstants.DegreesToRadiansDivisor;
-                            newBall.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * System.Math.Sin(angle));
-                            newBall.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * System.Math.Cos(angle));
+                                * Math.PI / ArkanoidConstants.DegreesToRadiansDivisor;
+                            newBall.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * Math.Sin(angle));
+                            newBall.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * Math.Cos(angle));
                             NormalizeBallSpeed(newBall);
                         }
                         balls.Add(newBall);
@@ -338,20 +294,20 @@ namespace Arkanoid.Core
                 if (ball.X <= 0)
                 {
                     ball.X = 0;
-                    ball.SpeedX = System.Math.Abs(ball.SpeedX);
+                    ball.SpeedX = Math.Abs(ball.SpeedX);
                     NormalizeBallSpeed(ball);
                 }
                 else if (ball.X + ball.Size >= gameState.GameWidth)
                 {
                     ball.X = gameState.GameWidth - ball.Size;
-                    ball.SpeedX = -System.Math.Abs(ball.SpeedX);
+                    ball.SpeedX = -Math.Abs(ball.SpeedX);
                     NormalizeBallSpeed(ball);
                 }
 
                 if (ball.Y <= 0)
                 {
                     ball.Y = 0;
-                    ball.SpeedY = System.Math.Abs(ball.SpeedY);
+                    ball.SpeedY = Math.Abs(ball.SpeedY);
                     NormalizeBallSpeed(ball);
                 }
 
@@ -362,19 +318,19 @@ namespace Arkanoid.Core
                     ball.Y = platform.Y - ball.Size;
 
                     var hitPosition = (float)(ball.X + ball.Size / 2 - (platform.X + platform.Width / 2)) / (platform.Width / 2);
-                    hitPosition = System.Math.Max(-1, System.Math.Min(1, hitPosition));
+                    hitPosition = Math.Max(-1, Math.Min(1, hitPosition));
 
                     var newSpeedX = (int)(ArkanoidConstants.BallBaseSpeed * hitPosition * ArkanoidConstants.PlatformBounceFactor);
-                    if (System.Math.Abs(newSpeedX) < ArkanoidConstants.BallMinSpeed)
+                    if (Math.Abs(newSpeedX) < ArkanoidConstants.BallMinSpeed)
                     {
                         newSpeedX = hitPosition > 0 ? ArkanoidConstants.BallMinSpeed : -ArkanoidConstants.BallMinSpeed;
                     }
 
-                    var newSpeedY = (int)System.Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedX * newSpeedX);
+                    var newSpeedY = (int)Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedX * newSpeedX);
                     if (newSpeedY < ArkanoidConstants.BallMinSpeed)
                     {
                         newSpeedY = ArkanoidConstants.BallMinSpeed;
-                        newSpeedX = (int)System.Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedY * newSpeedY);
+                        newSpeedX = (int)Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedY * newSpeedY);
                         if (hitPosition < 0)
                         {
                             newSpeedX = -newSpeedX;
@@ -425,7 +381,7 @@ namespace Arkanoid.Core
                         var overlapRight = brick.X + brick.Width - ball.X;
                         var overlapTop = ball.Y + ball.Size - brick.Y;
                         var overlapBottom = brick.Y + brick.Height - ball.Y;
-                        var minOverlap = System.Math.Min(System.Math.Min(overlapLeft, overlapRight), System.Math.Min(overlapTop, overlapBottom));
+                        var minOverlap = Math.Min(Math.Min(overlapLeft, overlapRight), Math.Min(overlapTop, overlapBottom));
 
                         if (minOverlap == overlapLeft || minOverlap == overlapRight)
                         {
@@ -480,7 +436,7 @@ namespace Arkanoid.Core
         /// <summary>Устанавливает платформу в указанную позицию</summary>
         public void SetPlatformPosition(int x)
         {
-            var newX = System.Math.Max(0, System.Math.Min(x, gameState.GameWidth - platform.Width));
+            var newX = Math.Max(0, Math.Min(x, gameState.GameWidth - platform.Width));
             platform.X = newX;
             if (!gameState.IsBallLaunched && balls.Count > 0)
             {

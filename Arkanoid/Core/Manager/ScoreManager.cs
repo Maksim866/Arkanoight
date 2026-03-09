@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Arkanoid.Models;
+﻿
+using Arkanoid.Core.Models;
 
-namespace Arkanoid.Core
+namespace Arkanoid.Core.Managers
 {
     /// <summary>
     /// Менеджер для управления таблицей рекордов
@@ -25,7 +24,7 @@ namespace Arkanoid.Core
                 PlayerName = name,
                 Score = score,
                 Lives = lives,
-                Date = System.DateTime.Now,
+                Date = DateTime.Now,
                 GameEndType = type
             });
 
