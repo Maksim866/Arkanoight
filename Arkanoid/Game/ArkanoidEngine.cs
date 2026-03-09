@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Arkanoight.Models;
+﻿
+using Arkanoid.Models;
 
-namespace Arkanoight.Core
+namespace Arkanoid.Core
 {
     /// <summary>
     /// Интерфейс игрового движка. Определяет контракт для всей игровой логики.
     /// </summary>
-    public interface IArkanoightEngine
+    public interface IArkanoidEngine
     {
         /// <summary>Получает модель платформы с текущими координатами и размерами</summary>
         PlatformModel Platform { get; }
@@ -55,7 +53,7 @@ namespace Arkanoight.Core
     /// Игровой движок арканоида. Содержит всю логику игры: физику, столкновения, 
     /// подсчет очков, управление усилениями и дополнительными мячами.
     /// </summary>
-    public class ArkanoightEngine : IArkanoightEngine
+    public class ArkanoidEngine : IArkanoidEngine
     {
         // Константы настроек
         private const int PlatformWidth = 100;
@@ -116,7 +114,7 @@ namespace Arkanoight.Core
         public bool IsPaused => gameState.IsPaused;
 
         /// <summary>Инициализирует новый экземпляр игрового движка</summary>
-        public ArkanoightEngine(int width, int height)
+        public ArkanoidEngine(int width, int height)
         {
             gameState = new GameStateModel
             {

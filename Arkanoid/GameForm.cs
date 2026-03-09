@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Windows.Forms;
-using Arkanoight.Core;
-using Arkanoight.Views;
+using Arkanoid.Core;
+using Arkanoid.Views;
 
-namespace Arkanoight
+namespace Arkanoid
 {
     /// <summary>
     /// Главная форма приложения
     /// </summary>
     public partial class GameForm : Form
     {
-        private IArkanoightEngine engine;
+        private IArkanoidEngine engine;
         private GameCanvas canvas;
         private System.Windows.Forms.Timer gameTimer;
         private bool ended;
@@ -46,7 +46,7 @@ namespace Arkanoight
         /// <summary>Инициализирует игровые компоненты</summary>
         private void InitializeGame()
         {
-            engine = new ArkanoightEngine(ClientSize.Width, ClientSize.Height);
+            engine = new ArkanoidEngine(ClientSize.Width, ClientSize.Height);
 
             canvas = new GameCanvas
             {

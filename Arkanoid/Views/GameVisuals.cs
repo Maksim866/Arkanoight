@@ -2,10 +2,10 @@
 using System.Drawing;
 using System.Windows.Forms;
 using System.ComponentModel;
-using Arkanoight.Core;
-using Arkanoight.Models;
+using Arkanoid.Core;
+using Arkanoid.Models;
 
-namespace Arkanoight.Views
+namespace Arkanoid.Views
 {
     /// <summary>
     /// Класс для визуализации игры с кэшированием ресурсов
@@ -92,7 +92,7 @@ namespace Arkanoight.Views
         }
 
         /// <summary>Рисует игру в буфер</summary>
-        public static void DrawToBuffer(IArkanoightEngine engine, Size clientSize)
+        public static void DrawToBuffer(IArkanoidEngine engine, Size clientSize)
         {
             if (buffer == null) return;
 
@@ -225,7 +225,7 @@ namespace Arkanoight.Views
         }
 
         /// <summary>Рисует экран окончания игры с таблицей рекордов</summary>
-        private static void DrawGameOverScreen(Graphics graphics, IArkanoightEngine engine, Size clientSize)
+        private static void DrawGameOverScreen(Graphics graphics, IArkanoidEngine engine, Size clientSize)
         {
             var scores = ScoreManager.GetScores();
             var message = engine.GameState.IsGameOver ? "ИГРА ОКОНЧЕНА!" : "ВЫ ПОБЕДИЛИ!";
@@ -274,7 +274,7 @@ namespace Arkanoight.Views
         }
 
         /// <summary>Полностью перерисовывает и отображает игру</summary>
-        public static void Render(IArkanoightEngine engine, Size clientSize)
+        public static void Render(IArkanoidEngine engine, Size clientSize)
         {
             if (buffer == null) return;
 
@@ -329,12 +329,12 @@ namespace Arkanoight.Views
     /// </summary>
     public class GameCanvas : Control
     {
-        private IArkanoightEngine engine;
+        private IArkanoidEngine engine;
 
         /// <summary>Получает или задает игровой движок</summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [Browsable(false)]
-        public IArkanoightEngine GameEngine
+        public IArkanoidEngine GameEngine
         {
             get => engine;
             set { engine = value; }

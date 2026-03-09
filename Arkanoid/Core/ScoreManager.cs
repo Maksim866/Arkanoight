@@ -1,8 +1,7 @@
 ﻿
-using System.Text.Json;
-using Arkanoight.Models;
+using Arkanoid.Models;
 
-namespace Arkanoight.Core
+namespace Arkanoid.Core
 {
     /// <summary>
     /// Менеджер для управления таблицей рекордов

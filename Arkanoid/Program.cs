@@ -1,4 +1,4 @@
-﻿namespace Arkanoight
+﻿namespace Arkanoid
 {
     internal static class Program
     {
