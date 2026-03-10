@@ -1,5 +1,4 @@
-﻿using Arkanoid.Core.Interfaces;
-using Arkanoid.Core.Engine;
+﻿using Arkanoid.Core.Engine;
 using Arkanoid.Core.Managers;
 using Arkanoid.Core.Constants;
 using Arkanoid.Views;
@@ -11,15 +10,14 @@ namespace Arkanoid
     /// </summary>
     public partial class GameForm : Form
     {
-        private IArkanoidEngine engine;
-        private GameCanvas canvas;
-        private System.Windows.Forms.Timer gameTimer;
+        private readonly ArkanoidEngine engine;
+        private readonly GameCanvas canvas;
+        private readonly System.Windows.Forms.Timer gameTimer;
+
         private bool ended;
         private int lastScore = -1;
         private int lastLives = -1;
-
         private int frameSkip;
-
         private DateTime lastUpdate = DateTime.Now;
 
         /// <summary>
@@ -28,23 +26,11 @@ namespace Arkanoid
         public GameForm()
         {
             ScoreManager.ResetScores();
-            InitializeForm();
-            InitializeGame();
-            Load += (s, e) => Focus();
-        }
 
-        private void InitializeForm()
-        {
-            Text = "Арканоид";
-            Size = new System.Drawing.Size(ArkanoidConstants.WindowWidth, ArkanoidConstants.WindowHeight);
-            StartPosition = FormStartPosition.CenterScreen;
-            FormBorderStyle = FormBorderStyle.FixedSingle;
-            MaximizeBox = false;
-            KeyPreview = true;
-        }
+            this.KeyPreview = true;
 
-        private void InitializeGame()
-        {
+            InitializeComponent();
+
             engine = new ArkanoidEngine(ClientSize.Width, ClientSize.Height);
 
             canvas = new GameCanvas(engine)
@@ -52,36 +38,31 @@ namespace Arkanoid
                 Dock = DockStyle.Fill
             };
 
-            canvas.MouseMove += (s, e) => MovePlatform(e.X);
-            canvas.MouseClick += (s, e) =>
+            gameTimer = new System.Windows.Forms.Timer();
+
+            Controls.Add(canvas);
+
+            canvas.MouseMove += (sender, mouseArgs) => MovePlatform(mouseArgs.X);
+            canvas.MouseClick += (sender, mouseArgs) =>
             {
-                if (e.Button == MouseButtons.Left)
+                if (mouseArgs.Button == MouseButtons.Left)
                 {
                     engine.LaunchBall();
                 }
             };
 
-            Controls.Add(canvas);
-
             GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
             GameVisuals.Render(engine, canvas.ClientSize);
 
-            gameTimer = new System.Windows.Forms.Timer();
             gameTimer.Interval = ArkanoidConstants.TimerInterval;
             gameTimer.Tick += GameTimer_Tick;
             gameTimer.Start();
 
             KeyDown += GameForm_KeyDown;
-
+            Load += (sender, args) => Focus();
         }
-
-        private void GameTimer_Tick(object sender, EventArgs e)
+        private void GameTimer_Tick(object? sender, EventArgs e)
         {
-            if (engine == null)
-            {
-                return;
-            }
-
             var now = DateTime.Now;
             var elapsedMs = (now - lastUpdate).TotalMilliseconds;
 
@@ -144,11 +125,6 @@ namespace Arkanoid
 
         private void MovePlatform(int x)
         {
-            if (engine == null)
-            {
-                return;
-            }
-
             var oldX = engine.Platform.X;
             var newX = Math.Max(0, Math.Min(x - engine.Platform.Width / 2,
                 engine.GameState.GameWidth - engine.Platform.Width));
@@ -160,12 +136,11 @@ namespace Arkanoid
             }
         }
 
-        private void GameForm_KeyDown(object sender, KeyEventArgs e)
+        private void GameForm_KeyDown(object? sender, KeyEventArgs e)
         {
             var needRedraw = false;
 
-            if (e.KeyCode == Keys.R && engine != null &&
-                (engine.GameState.IsGameOver || engine.GameState.IsGameWon))
+            if (e.KeyCode == Keys.R && (engine.GameState.IsGameOver || engine.GameState.IsGameWon))
             {
                 engine.RestartGame();
                 ended = false;
@@ -176,13 +151,12 @@ namespace Arkanoid
             }
             else if (e.KeyCode == Keys.X)
             {
-                engine?.GameOver();
+                engine.GameOver();
                 ended = true;
                 needRedraw = true;
             }
-            else if (e.KeyCode == Keys.Space && engine != null &&
-                engine.GameState.IsBallLaunched && !engine.GameState.IsGameOver &&
-                !engine.GameState.IsGameWon)
+            else if (e.KeyCode == Keys.Space && engine.GameState.IsBallLaunched &&
+                     !engine.GameState.IsGameOver && !engine.GameState.IsGameWon)
             {
                 engine.TogglePause();
                 needRedraw = true;
@@ -197,11 +171,19 @@ namespace Arkanoid
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
-            if (canvas != null && engine != null)
+
+            if (canvas == null)
             {
-                GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
-                GameVisuals.Render(engine, canvas.ClientSize);
+                return;
             }
+
+            if (canvas.ClientSize.Width <= 0 || canvas.ClientSize.Height <= 0)
+            {
+                return;
+            }
+
+            GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
+            GameVisuals.Render(engine, canvas.ClientSize);
         }
     }
 }

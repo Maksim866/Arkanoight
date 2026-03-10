@@ -47,7 +47,7 @@ namespace Arkanoid.Views
         private static int lastWidth, lastHeight;
         private static Control targetControl;
 
-        static GameVisuals()
+         static GameVisuals()
         {
             brickBrushes = new SolidBrush[brickColors.Length];
             for (var i = 0; i < brickColors.Length; i++)
