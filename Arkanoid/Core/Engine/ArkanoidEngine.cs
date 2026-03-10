@@ -81,11 +81,11 @@ namespace Arkanoid.Core.Engine
             var startX = (gameState.GameWidth - ArkanoidConstants.BrickWidth * ArkanoidConstants.BricksPerRow) / 2;
 
             var allBricks = new List<(int, int)>();
-            for (var r = 0; r < ArkanoidConstants.BrickRows; r++)
+            for (var row = 0; row < ArkanoidConstants.BrickRows; row++)
             {
-                for (var c = 0; c < ArkanoidConstants.BricksPerRow; c++)
+                for (var column = 0; column < ArkanoidConstants.BricksPerRow; column++)
                 {
-                    allBricks.Add((r, c));
+                    allBricks.Add((row, column));
                 }
             }
 

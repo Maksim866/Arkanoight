@@ -15,9 +15,6 @@
         /// <summary>Расстояние от нижнего края до платформы</summary>
         public const int PlatformYOffset = 50;
 
-        /// <summary>Скорость движения платформы</summary>
-        public const int PlatformSpeed = 10;
-
         /// <summary>Ширина платформы при усилении</summary>
         public const int WidePaddleWidth = 180;
 
@@ -91,9 +88,6 @@
         public const int DegreesToRadiansDivisor = 180;
 
         // === Скорость ===
-        /// <summary>Порог нормализации скорости</summary>
-        public const float SpeedNormalizationThreshold = 0.5f;
-
         /// <summary>Минимальное значение скорости</summary>
         public const int MinSpeedValue = 1;
 
