@@ -69,9 +69,13 @@ namespace Arkanoid.Views
         {
             targetControl = control;
 
-            if (buffer != null && lastWidth == width && lastHeight == height)
+            // Создаем новый буфер только если его нет или изменился размер
+            if (buffer == null || lastWidth != width || lastHeight != height)
             {
-                return;
+                buffer?.Dispose();
+                buffer = new Bitmap(width, height);
+                lastWidth = width;
+                lastHeight = height;
             }
 
             buffer?.Dispose();
