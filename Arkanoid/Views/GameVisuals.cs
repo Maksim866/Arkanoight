@@ -173,7 +173,7 @@ namespace Arkanoid.Views
                 {
                     DrawPauseScreen(graphics, clientSize);
                 }
-                else if (!engine.IsBallLaunched && !engine.GameState.IsGameOver && !engine.GameState.IsGameWon)
+                else if (!engine.GameState.IsBallLaunched && !engine.GameState.IsGameOver && !engine.GameState.IsGameWon)
                 {
                     DrawStartScreen(graphics, clientSize);
                 }

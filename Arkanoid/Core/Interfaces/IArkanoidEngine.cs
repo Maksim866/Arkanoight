@@ -22,12 +22,6 @@ namespace Arkanoid.Core.Interfaces
         /// <summary>Получает список всех падающих усилений</summary>
         List<PowerUpModel> PowerUps { get; }
 
-        /// <summary>Получает флаг, указывающий, запущен ли хотя бы один мяч</summary>
-        bool IsBallLaunched { get; }
-
-        /// <summary>Получает флаг, указывающий, находится ли игра на паузе</summary>
-        bool IsPaused { get; }
-
         /// <summary>Обновляет состояние игры. Вызывается каждый кадр.</summary>
         void Update();
 

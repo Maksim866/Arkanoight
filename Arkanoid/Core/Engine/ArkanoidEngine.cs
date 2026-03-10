@@ -38,9 +38,6 @@ namespace Arkanoid.Core.Engine
         /// <summary>Получает флаг, запущен ли хотя бы один мяч</summary>
         public bool IsBallLaunched => balls.Any(b => b.IsActive && (b.SpeedX != 0 || b.SpeedY != 0));
 
-        /// <summary>Получает флаг, указывающий, находится ли игра на паузе</summary>
-        public bool IsPaused => gameState.IsPaused;
-
         /// <summary>Инициализирует новый экземпляр игрового движка</summary>
         public ArkanoidEngine(int width, int height)
         {

@@ -113,7 +113,7 @@ namespace Arkanoid
 
             var needRedraw = false;
 
-            if (engine.IsBallLaunched)
+            if (engine.GameState.IsBallLaunched)
             {
                 frameSkip = (frameSkip + 1) % ArkanoidConstants.MaxFrameSkip;
                 needRedraw = (frameSkip == 0);
@@ -132,7 +132,7 @@ namespace Arkanoid
             }
 
             if (engine.GameState.IsPaused || engine.GameState.IsGameOver ||
-                engine.GameState.IsGameWon || !engine.IsBallLaunched)
+                engine.GameState.IsGameWon || !engine.GameState.IsBallLaunched)
             {
                 needRedraw = true;
             }
@@ -182,7 +182,7 @@ namespace Arkanoid
                 needRedraw = true;
             }
             else if (e.KeyCode == Keys.Space && engine != null &&
-                engine.IsBallLaunched && !engine.GameState.IsGameOver &&
+                engine.GameState.IsBallLaunched && !engine.GameState.IsGameOver &&
                 !engine.GameState.IsGameWon)
             {
                 engine.TogglePause();
