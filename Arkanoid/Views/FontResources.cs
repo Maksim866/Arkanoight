@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-
-namespace Arkanoid.Views
+﻿namespace Arkanoid.Views
 {
     /// <summary>
     /// Централизованное хранилище всех шрифтов, используемых в игре

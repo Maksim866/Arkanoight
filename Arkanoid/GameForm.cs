@@ -47,10 +47,9 @@ namespace Arkanoid
         {
             engine = new ArkanoidEngine(ClientSize.Width, ClientSize.Height);
 
-            canvas = new GameCanvas
+            canvas = new GameCanvas(engine)
             {
-                Dock = DockStyle.Fill,
-                GameEngine = engine
+                Dock = DockStyle.Fill
             };
 
             canvas.MouseMove += (s, e) => MovePlatform(e.X);

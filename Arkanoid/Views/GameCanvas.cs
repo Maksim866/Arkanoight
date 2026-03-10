@@ -1,8 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.Windows.Forms;
-using System.ComponentModel;
-using Arkanoid.Core.Interfaces;
+﻿using Arkanoid.Core.Interfaces;
 
 namespace Arkanoid.Views
 {
@@ -11,22 +7,14 @@ namespace Arkanoid.Views
     /// </summary>
     public class GameCanvas : Control
     {
-        private IArkanoidEngine engine;
-
-        /// <summary>
-        /// Получает или задает игровой движок
-        /// </summary>
-        public IArkanoidEngine GameEngine
-        {
-            get => engine;
-            set { engine = value; }
-        }
+        private readonly IArkanoidEngine engine;
 
         /// <summary>
         /// Инициализирует новый экземпляр игрового холста
         /// </summary>
-        public GameCanvas()
+        public GameCanvas(IArkanoidEngine gameEngine)
         {
+            engine = gameEngine ?? throw new ArgumentNullException(nameof(gameEngine));
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
         }
 
@@ -37,12 +25,9 @@ namespace Arkanoid.Views
         {
             base.OnPaint(e);
 
-            if (engine != null)
-            {
                 GameVisuals.Initialize(this, ClientSize.Width, ClientSize.Height);
                 GameVisuals.DrawToBuffer(engine, ClientSize);
                 GameVisuals.RefreshDisplay();
-            }
         }
 
         /// <summary>

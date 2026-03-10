@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Arkanoid.Core.Models
+﻿namespace Arkanoid.Core.Models
 {
     /// <summary>
     /// Запись в таблице рекордов
