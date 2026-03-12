@@ -54,7 +54,7 @@ namespace ArkanoidWinForms
             GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
             GameVisuals.Render(engine, canvas.ClientSize);
 
-            gameTimer.Interval = ArkanoidConstants.TimerInterval;
+            gameTimer.Interval = WinFormsConstants.TimerInterval;
             gameTimer.Tick += GameTimer_Tick;
             gameTimer.Start();
 
@@ -66,9 +66,9 @@ namespace ArkanoidWinForms
             var now = DateTime.Now;
             var elapsedMs = (now - lastUpdate).TotalMilliseconds;
 
-            if (elapsedMs > ArkanoidConstants.MaxElapsedMs)
+            if (elapsedMs > WinFormsConstants.MaxElapsedMs)
             {
-                elapsedMs = ArkanoidConstants.TimerInterval;
+                elapsedMs = WinFormsConstants.TimerInterval;
             }
 
             lastUpdate = now;
@@ -95,7 +95,7 @@ namespace ArkanoidWinForms
 
             if (engine.GameState.IsBallLaunched)
             {
-                frameSkip = (frameSkip + 1) % ArkanoidConstants.MaxFrameSkip;
+                frameSkip = (frameSkip + 1) % WinFormsConstants.MaxFrameSkip;
                 needRedraw = (frameSkip == 0);
             }
 

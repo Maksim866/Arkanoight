@@ -90,22 +90,5 @@
         // === Скорость ===
         /// <summary>Минимальное значение скорости</summary>
         public const int MinSpeedValue = 1;
-
-        // === Таймер ===
-        /// <summary>Максимальное прошедшее время (мс)</summary>
-        public const int MaxElapsedMs = 50;
-
-        // === Окно ===
-        /// <summary>Ширина окна по умолчанию</summary>
-        public const int WindowWidth = 800;
-
-        /// <summary>Высота окна по умолчанию</summary>
-        public const int WindowHeight = 600;
-
-        /// <summary>Интервал таймера (мс)</summary>
-        public const int TimerInterval = 16;
-
-        /// <summary>Максимальный пропуск кадров</summary>
-        public const int MaxFrameSkip = 2;
     }
 }
