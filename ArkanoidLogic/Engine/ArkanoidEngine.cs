@@ -45,10 +45,10 @@ namespace ArkanoidLogic.Engine
                 Lives = ArkanoidConstants.StartLives
             };
 
-            platform = new PlatformModel();
-            balls = new List<BallModel>();
-            bricks = new List<BrickModel>();
-            powerUps = new List<PowerUpModel>();
+            platform = new();
+            balls = [];
+            bricks = [];
+            powerUps = [];
 
             RestartGame();
         }
@@ -141,7 +141,7 @@ namespace ArkanoidLogic.Engine
         /// <summary>Запускает все мячи с платформы</summary>
         public void LaunchBall()
         {
-            if (!gameState.IsBallLaunched && !gameState.IsGameOver && !gameState.IsGameWon)
+            if (gameState is { IsBallLaunched: false, IsGameOver: false, IsGameWon: false })
             {
                 gameState.IsBallLaunched = true;
                 foreach (var ball in balls.Where(b => b.IsActive && b.SpeedX == 0 && b.SpeedY == 0))
@@ -222,43 +222,45 @@ namespace ArkanoidLogic.Engine
                 if (powerUp.Y + powerUp.Size >= platform.Y && powerUp.Y <= platform.Y + platform.Height &&
                     powerUp.X + powerUp.Size >= platform.X && powerUp.X <= platform.X + platform.Width)
                 {
-                    if (powerUp.Type == PowerUpType.ExtraBall)
+                    switch (powerUp.Type)
                     {
-                        var newBall = new BallModel
-                        {
-                            X = platform.X + platform.Width / 2 - ArkanoidConstants.BallSize / 2,
-                            Y = platform.Y - ArkanoidConstants.BallSize - ArkanoidConstants.BallPlatformOffset,
-                            Size = ArkanoidConstants.BallSize,
-                            Damage = balls[0].Damage,
-                            IsActive = true
-                        };
-                        if (gameState.IsBallLaunched)
-                        {
-                            var angle = (random.NextDouble() * (ArkanoidConstants.MaxPowerUpAngle * 2) - ArkanoidConstants.MaxPowerUpAngle)
-                                * Math.PI / ArkanoidConstants.DegreesToRadiansDivisor;
-                            newBall.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * Math.Sin(angle));
-                            newBall.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * Math.Cos(angle));
-                            NormalizeBallSpeed(newBall);
-                        }
-                        balls.Add(newBall);
+                        case PowerUpType.ExtraBall:
+                            var newBall = new BallModel
+                            {
+                                X = platform.X + platform.Width / 2 - ArkanoidConstants.BallSize / 2,
+                                Y = platform.Y - ArkanoidConstants.BallSize - ArkanoidConstants.BallPlatformOffset,
+                                Size = ArkanoidConstants.BallSize,
+                                Damage = balls[0].Damage,
+                                IsActive = true
+                            };
+                            if (gameState.IsBallLaunched)
+                            {
+                                var angle = (random.NextDouble() * (ArkanoidConstants.MaxPowerUpAngle * 2) - ArkanoidConstants.MaxPowerUpAngle)
+                                    * Math.PI / ArkanoidConstants.DegreesToRadiansDivisor;
+                                newBall.SpeedX = (int)(ArkanoidConstants.BallBaseSpeed * Math.Sin(angle));
+                                newBall.SpeedY = -(int)(ArkanoidConstants.BallBaseSpeed * Math.Cos(angle));
+                                NormalizeBallSpeed(newBall);
+                            }
+                            balls.Add(newBall);
+                            break;
+
+                        case PowerUpType.DamageBoost:
+                            foreach (var ball in balls)
+                            {
+                                ball.Damage++;
+                            }
+                            break;
+
+                        case PowerUpType.WidePaddle:
+                            if (wideTimer <= 0)
+                            {
+                                originalPlatformWidth = platform.Width;
+                            }
+                            platform.Width = ArkanoidConstants.WidePaddleWidth;
+                            wideTimer = ArkanoidConstants.WidePaddleDuration;
+                            break;
                     }
-                    else if (powerUp.Type == PowerUpType.DamageBoost)
-                    {
-                        foreach (var ball in balls)
-                        {
-                            ball.Damage++;
-                        }
-                    }
-                    else if (powerUp.Type == PowerUpType.WidePaddle)
-                    {
-                        if (wideTimer <= 0)
-                        {
-                            originalPlatformWidth = platform.Width;
-                        }
-                        platform.Width = ArkanoidConstants.WidePaddleWidth;
-                        wideTimer = ArkanoidConstants.WidePaddleDuration;
-                    }
-                    powerUp.IsActive = false;
+                            powerUp.IsActive = false;
                 }
                 else if (powerUp.Y > gameState.GameHeight)
                 {
@@ -268,9 +270,8 @@ namespace ArkanoidLogic.Engine
             powerUps.RemoveAll(p => !p.IsActive);
 
             var hasActiveBall = false;
-            for (var i = 0; i < balls.Count; i++)
+            foreach (var ball in balls)
             {
-                var ball = balls[i];
                 if (!ball.IsActive)
                 {
                     continue;
