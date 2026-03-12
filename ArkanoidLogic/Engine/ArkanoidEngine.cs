@@ -106,22 +106,22 @@ namespace ArkanoidLogic.Engine
                 powerUpMap[allBricks[i]] = powerUpTypes[i];
             }
 
-            for (var r = 0; r < ArkanoidConstants.BrickRows; r++)
+            for (var row = 0; row < ArkanoidConstants.BrickRows; row++)
             {
-                for (var c = 0; c < ArkanoidConstants.BricksPerRow; c++)
+                for (var column = 0; column < ArkanoidConstants.BricksPerRow; column++)
                 {
                     var brick = new BrickModel
                     {
-                        X = startX + c * ArkanoidConstants.BrickWidth,
-                        Y = ArkanoidConstants.BrickStartY + r * ArkanoidConstants.BrickHeight,
+                        X = startX + column * ArkanoidConstants.BrickWidth,
+                        Y = ArkanoidConstants.BrickStartY + row * ArkanoidConstants.BrickHeight,
                         Width = ArkanoidConstants.BrickWidth,
                         Height = ArkanoidConstants.BrickHeight,
                         IsActive = true,
-                        Row = r,
-                        Health = ArkanoidConstants.BrickHealthByRow[r],
-                        MaxHealth = ArkanoidConstants.BrickHealthByRow[r],
-                        HasPowerUp = powerUpMap.ContainsKey((r, c)),
-                        PowerUpType = powerUpMap.ContainsKey((r, c)) ? powerUpMap[(r, c)] : PowerUpType.ExtraBall
+                        Row = row,
+                        Health = ArkanoidConstants.BrickHealthByRow[row],
+                        MaxHealth = ArkanoidConstants.BrickHealthByRow[row],
+                        HasPowerUp = powerUpMap.ContainsKey((row, column)),
+                        PowerUpType = powerUpMap.ContainsKey((row, column)) ? powerUpMap[(row, column)] : PowerUpType.ExtraBall
                     };
                     bricks.Add(brick);
                 }
