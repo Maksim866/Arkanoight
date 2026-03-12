@@ -16,7 +16,7 @@ namespace ArkanoidLogic.Engine
         private List<BrickModel> bricks;
         private List<PowerUpModel> powerUps;
         private GameStateModel gameState;
-        private Random random = new Random();
+        private Random random = new();
         private int wideTimer;
         private int originalPlatformWidth;
 
@@ -35,9 +35,6 @@ namespace ArkanoidLogic.Engine
         /// <summary>Получает список всех падающих усилений</summary>
         public List<PowerUpModel> PowerUps => powerUps;
 
-        /// <summary>Получает флаг, запущен ли хотя бы один мяч</summary>
-        public bool IsBallLaunched => balls.Any(b => b.IsActive && (b.SpeedX != 0 || b.SpeedY != 0));
-
         /// <summary>Инициализирует новый экземпляр игрового движка</summary>
         public ArkanoidEngine(int width, int height)
         {
@@ -47,34 +44,38 @@ namespace ArkanoidLogic.Engine
                 GameHeight = height,
                 Lives = ArkanoidConstants.StartLives
             };
+
+            platform = new PlatformModel();
+            balls = new List<BallModel>();
+            bricks = new List<BrickModel>();
+            powerUps = new List<PowerUpModel>();
+
             RestartGame();
         }
 
         /// <summary>Полностью перезапускает игру</summary>
         public void RestartGame()
         {
-            platform = new PlatformModel
-            {
-                X = (gameState.GameWidth - ArkanoidConstants.PlatformWidth) / 2,
-                Y = gameState.GameHeight - ArkanoidConstants.PlatformYOffset,
-                Width = ArkanoidConstants.PlatformWidth,
-                Height = ArkanoidConstants.PlatformHeight
-            };
+            // Платформа
+            platform.X = (gameState.GameWidth - ArkanoidConstants.PlatformWidth) / 2;
+            platform.Y = gameState.GameHeight - ArkanoidConstants.PlatformYOffset;
+            platform.Width = ArkanoidConstants.PlatformWidth;
+            platform.Height = ArkanoidConstants.PlatformHeight;
             originalPlatformWidth = ArkanoidConstants.PlatformWidth;
 
-            balls = new List<BallModel>
+            // Мячи
+            balls.Clear();
+            balls.Add(new BallModel
             {
-                new BallModel
-                {
-                    X = (gameState.GameWidth - ArkanoidConstants.BallSize) / 2,
-                    Y = platform.Y - ArkanoidConstants.BallSize - ArkanoidConstants.BallPlatformOffset,
-                    Size = ArkanoidConstants.BallSize,
-                    Damage = 1,
-                    IsActive = true
-                }
-            };
+                X = (gameState.GameWidth - ArkanoidConstants.BallSize) / 2,
+                Y = platform.Y - ArkanoidConstants.BallSize - ArkanoidConstants.BallPlatformOffset,
+                Size = ArkanoidConstants.BallSize,
+                Damage = 1,
+                IsActive = true
+            });
 
-            bricks = new List<BrickModel>();
+            // Кирпичи
+            bricks.Clear();
             var startX = (gameState.GameWidth - ArkanoidConstants.BrickWidth * ArkanoidConstants.BricksPerRow) / 2;
 
             var allBricks = new List<(int, int)>();
@@ -126,7 +127,8 @@ namespace ArkanoidLogic.Engine
                 }
             }
 
-            powerUps = new List<PowerUpModel>();
+            powerUps.Clear();
+
             gameState.Score = 0;
             gameState.Lives = ArkanoidConstants.StartLives;
             gameState.IsGameOver = false;
