@@ -1,4 +1,5 @@
-﻿using ArkanoidLogic.Engine;
+﻿using ArkanoidLogic.Interfaces;
+using ArkanoidLogic.Engine;
 using ArkanoidLogic.Managers;
 using ArkanoidLogic.Constants;
 using ArkanoidWinForms.Views;
@@ -10,7 +11,7 @@ namespace ArkanoidWinForms
     /// </summary>
     public partial class GameForm : Form
     {
-        private readonly ArkanoidEngine engine;
+        private readonly IArkanoidEngine engine;
         private readonly GameCanvas canvas;
         private readonly System.Windows.Forms.Timer gameTimer;
 
@@ -27,7 +28,7 @@ namespace ArkanoidWinForms
         {
             ScoreManager.ResetScores();
 
-            this.KeyPreview = true;
+            KeyPreview = true;
 
             InitializeComponent();
 
@@ -42,8 +43,8 @@ namespace ArkanoidWinForms
 
             Controls.Add(canvas);
 
-            canvas.MouseMove += (sender, mouseArgs) => MovePlatform(mouseArgs.X);
-            canvas.MouseClick += (sender, mouseArgs) =>
+            canvas.MouseMove += (_, mouseArgs) => MovePlatform(mouseArgs.X);
+            canvas.MouseClick += (_, mouseArgs) =>
             {
                 if (mouseArgs.Button == MouseButtons.Left)
                 {
@@ -59,7 +60,7 @@ namespace ArkanoidWinForms
             gameTimer.Start();
 
             KeyDown += GameForm_KeyDown;
-            Load += (sender, args) => Focus();
+            Load += (_, _) => Focus();
         }
         private void GameTimer_Tick(object? sender, EventArgs e)
         {
