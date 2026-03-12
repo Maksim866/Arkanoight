@@ -1,7 +1,8 @@
-﻿using ArkanoidLogic.Interfaces;
-using ArkanoidLogic.Models;
+﻿using ArkanoidLogic.Constants;
 using ArkanoidLogic.Enums;
-using ArkanoidLogic.Constants;
+using ArkanoidLogic.Interfaces;
+using ArkanoidLogic.Models;
+using System.Drawing;
 
 namespace ArkanoidLogic.Engine
 {
@@ -87,7 +88,7 @@ namespace ArkanoidLogic.Engine
                 }
             }
 
-            allBricks = allBricks.OrderBy(x => random.Next()).ToList();
+            allBricks = allBricks.OrderBy(_ => random.Next()).ToList();
 
             var powerUpTypes = new List<PowerUpType>();
             var powerUpCount = (int)(allBricks.Count * ArkanoidConstants.PowerUpChance);
@@ -98,7 +99,7 @@ namespace ArkanoidLogic.Engine
                 powerUpTypes.Add(PowerUpType.DamageBoost);
                 powerUpTypes.Add(PowerUpType.WidePaddle);
             }
-            powerUpTypes = powerUpTypes.OrderBy(x => random.Next()).ToList();
+            powerUpTypes = powerUpTypes.OrderBy(_ => random.Next()).ToList();
 
             var powerUpMap = new Dictionary<(int, int), PowerUpType>();
             for (var i = 0; i < powerUpTypes.Count; i++)
@@ -219,8 +220,10 @@ namespace ArkanoidLogic.Engine
 
                 powerUp.Y += ArkanoidConstants.PowerUpSpeed;
 
-                if (powerUp.Y + powerUp.Size >= platform.Y && powerUp.Y <= platform.Y + platform.Height &&
-                    powerUp.X + powerUp.Size >= platform.X && powerUp.X <= platform.X + platform.Width)
+                var powerUpRect = new Rectangle(powerUp.X, powerUp.Y, powerUp.Size, powerUp.Size);
+                var platformRect = new Rectangle(platform.X, platform.Y, platform.Width, platform.Height);
+
+                if (powerUpRect.IntersectsWith(platformRect))
                 {
                     switch (powerUp.Type)
                     {
@@ -325,11 +328,15 @@ namespace ArkanoidLogic.Engine
                         newSpeedX = hitPosition > 0 ? ArkanoidConstants.BallMinSpeed : -ArkanoidConstants.BallMinSpeed;
                     }
 
-                    var newSpeedY = (int)Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedX * newSpeedX);
+                    var newSpeedY = (int)Math.Sqrt(
+                        ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed -
+                        newSpeedX * newSpeedX);
                     if (newSpeedY < ArkanoidConstants.BallMinSpeed)
                     {
                         newSpeedY = ArkanoidConstants.BallMinSpeed;
-                        newSpeedX = (int)Math.Sqrt(ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed - newSpeedY * newSpeedY);
+                        newSpeedX = (int)Math.Sqrt(
+                            ArkanoidConstants.BallBaseSpeed * ArkanoidConstants.BallBaseSpeed -
+                            newSpeedY * newSpeedY);
                         if (hitPosition < 0)
                         {
                             newSpeedX = -newSpeedX;
