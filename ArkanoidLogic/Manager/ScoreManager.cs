@@ -1,6 +1,6 @@
-﻿using Arkanoid.Core.Models;
+﻿using ArkanoidLogic.Models;
 
-namespace Arkanoid.Core.Managers
+namespace ArkanoidLogic.Managers
 {
     /// <summary>
     /// Менеджер для управления таблицей рекордов

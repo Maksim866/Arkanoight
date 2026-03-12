@@ -1,9 +1,9 @@
-﻿using Arkanoid.Core.Interfaces;
-using Arkanoid.Core.Models;
-using Arkanoid.Core.Enums;
-using Arkanoid.Core.Constants;
+﻿using ArkanoidLogic.Interfaces;
+using ArkanoidLogic.Models;
+using ArkanoidLogic.Enums;
+using ArkanoidLogic.Constants;
 
-namespace Arkanoid.Core.Engine
+namespace ArkanoidLogic.Engine
 {
     /// <summary>
     /// Игровой движок арканоида. Содержит всю логику игры: физику, столкновения, 

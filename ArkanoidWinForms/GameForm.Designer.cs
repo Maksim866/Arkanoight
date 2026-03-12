@@ -1,4 +1,4 @@
-﻿namespace Arkanoid
+﻿namespace ArkanoidWinForms
 {
     partial class GameForm
     {
@@ -30,13 +30,14 @@
         {
             SuspendLayout();
             // 
-            // Form1
+            // GameForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 600);
             Name = "GameForm";
             Text = "Арканоид";
+            Load += GameForm_Load;
             ResumeLayout(false);
         }
 

@@ -1,6 +1,6 @@
-﻿using Arkanoid.Core.Enums;
+﻿using ArkanoidLogic.Enums;
 
-namespace Arkanoid.Core.Models
+namespace ArkanoidLogic.Models
 {
     /// <summary>
     /// Модель кирпича

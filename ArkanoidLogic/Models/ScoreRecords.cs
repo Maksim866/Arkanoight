@@ -1,4 +1,4 @@
-﻿namespace Arkanoid.Core.Models
+﻿namespace ArkanoidLogic.Models
 {
     /// <summary>
     /// Запись в таблице рекордов

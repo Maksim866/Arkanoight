@@ -1,9 +1,9 @@
-﻿using Arkanoid.Core.Engine;
-using Arkanoid.Core.Managers;
-using Arkanoid.Core.Constants;
-using Arkanoid.Views;
+﻿using ArkanoidLogic.Engine;
+using ArkanoidLogic.Managers;
+using ArkanoidLogic.Constants;
+using ArkanoidWinForms.Views;
 
-namespace Arkanoid
+namespace ArkanoidWinForms
 {
     /// <summary>
     /// Главная форма приложения
@@ -184,6 +184,11 @@ namespace Arkanoid
 
             GameVisuals.Initialize(canvas, canvas.ClientSize.Width, canvas.ClientSize.Height);
             GameVisuals.Render(engine, canvas.ClientSize);
+        }
+
+        private void GameForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
