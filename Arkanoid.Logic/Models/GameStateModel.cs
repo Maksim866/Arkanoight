@@ -1,4 +1,4 @@
-﻿namespace ArkanoidLogic.Models
+﻿namespace Arkanoid.Logic.Models
 {
     /// <summary>
     /// Состояние игры

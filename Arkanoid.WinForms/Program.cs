@@ -1,4 +1,4 @@
-﻿namespace ArkanoidWinForms
+﻿namespace Arkanoid.WinForms
 {
     /// <summary>
     /// Главный класс программы, содержащий точку входа в приложение.

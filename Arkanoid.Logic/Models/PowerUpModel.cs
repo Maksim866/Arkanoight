@@ -1,6 +1,6 @@
-﻿using ArkanoidLogic.Enums;
+﻿using Arkanoid.Logic.Enums;
 
-namespace ArkanoidLogic.Models
+namespace Arkanoid.Logic.Models
 {
     /// <summary>
     /// Модель падающего усиления

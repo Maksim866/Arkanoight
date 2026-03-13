@@ -1,4 +1,4 @@
-﻿namespace ArkanoidLogic.Enums
+﻿namespace Arkanoid.Logic.Enums
 {
     /// <summary>
     /// Типы усилений, которые могут выпадать из кирпичей

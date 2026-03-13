@@ -1,4 +1,4 @@
-﻿namespace ArkanoidWinForms.Views
+﻿namespace Arkanoid.WinForms.Views
 {
     /// <summary>
     /// Константы для позиционирования элементов UI
@@ -13,7 +13,6 @@
         // Размеры стартового окна
         public const int StartBoxWidth = 600;
         public const int StartBoxHeight = 450;
-        public const int StartBoxYOffset = 20;
 
         // Размеры квадратиков усилений
         public const int PowerUpSquareSize = 25;

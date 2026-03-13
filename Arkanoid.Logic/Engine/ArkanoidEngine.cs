@@ -1,10 +1,10 @@
-﻿using ArkanoidLogic.Constants;
-using ArkanoidLogic.Enums;
-using ArkanoidLogic.Interfaces;
-using ArkanoidLogic.Models;
+﻿using Arkanoid.Logic.Constants;
+using Arkanoid.Logic.Enums;
+using Arkanoid.Logic.Interfaces;
+using Arkanoid.Logic.Models;
 using System.Drawing;
 
-namespace ArkanoidLogic.Engine
+namespace Arkanoid.Logic.Engine
 {
     /// <summary>
     /// Игровой движок арканоида. Содержит всю логику игры: физику, столкновения, 

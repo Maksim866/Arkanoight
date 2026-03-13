@@ -1,10 +1,10 @@
-﻿using ArkanoidLogic.Interfaces;
-using ArkanoidLogic.Engine;
-using ArkanoidLogic.Managers;
-using ArkanoidWinForms.Constants;
-using ArkanoidWinForms.Views;
+﻿using Arkanoid.Logic.Interfaces;
+using Arkanoid.Logic.Engine;
+using Arkanoid.Logic.Managers;
+using Arkanoid.WinForms.Constants;
+using Arkanoid.WinForms.Views;
 
-namespace ArkanoidWinForms
+namespace Arkanoid.WinForms
 {
     /// <summary>
     /// Главная форма приложения

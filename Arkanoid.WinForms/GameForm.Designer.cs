@@ -1,4 +1,4 @@
-﻿namespace ArkanoidWinForms
+﻿namespace Arkanoid.WinForms
 {
     partial class GameForm
     {

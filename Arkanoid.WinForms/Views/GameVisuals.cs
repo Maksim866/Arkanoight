@@ -1,8 +1,8 @@
-﻿using ArkanoidLogic.Interfaces;
-using ArkanoidLogic.Enums;
-using ArkanoidLogic.Managers;
+﻿using Arkanoid.Logic.Interfaces;
+using Arkanoid.Logic.Enums;
+using Arkanoid.Logic.Managers;
 
-namespace ArkanoidWinForms.Views
+namespace Arkanoid.WinForms.Views
 {
     /// <summary>
     /// Класс для визуализации игры с кэшированием ресурсов

@@ -8,6 +8,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\ArkanoidLogic\ArkanoidLogic.csproj" />
+		<ProjectReference Include="..\Arkanoid.Logic\Arkanoid.Logic.csproj" />
 	</ItemGroup>
 </Project>

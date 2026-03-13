@@ -1,6 +1,6 @@
-﻿using ArkanoidLogic.Interfaces;
+﻿using Arkanoid.Logic.Interfaces;
 
-namespace ArkanoidWinForms.Views
+namespace Arkanoid.WinForms.Views
 {
     /// <summary>
     /// Контрол для отображения игры

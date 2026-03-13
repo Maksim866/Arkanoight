@@ -1,6 +1,6 @@
-﻿using ArkanoidLogic.Models;
+﻿using Arkanoid.Logic.Models;
 
-namespace ArkanoidLogic.Interfaces
+namespace Arkanoid.Logic.Interfaces
 {
     /// <summary>
     /// Интерфейс игрового движка. Определяет контракт для всей игровой логики.

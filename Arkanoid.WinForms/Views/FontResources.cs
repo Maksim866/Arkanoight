@@ -1,4 +1,4 @@
-﻿namespace ArkanoidWinForms.Views
+﻿namespace Arkanoid.WinForms.Views
 {
     /// <summary>
     /// Централизованное хранилище всех шрифтов, используемых в игре

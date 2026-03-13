@@ -1,4 +1,4 @@
-﻿namespace ArkanoidLogic.Constants
+﻿namespace Arkanoid.Logic.Constants
 {
     /// <summary>
     /// Централизованное хранилище всех констант игры
