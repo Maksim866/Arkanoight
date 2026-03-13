@@ -37,5 +37,8 @@
 
         /// <summary>Шрифт для курсивных надписей (например, "Пока нет рекордов")</summary>
         public static readonly Font ItalicFont = new Font("Arial", 14, FontStyle.Italic);
+
+        /// <summary>Смещение текста паузы по вертикали</summary>
+        public const int PauseTextYOffset = 30;
     }
 }

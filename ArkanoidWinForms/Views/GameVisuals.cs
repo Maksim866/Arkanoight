@@ -44,6 +44,7 @@ namespace ArkanoidWinForms.Views
 
         // Буфер
         private static Bitmap buffer;
+        private static Graphics cachedGraphics;
         private static int lastWidth, lastHeight;
         private static Control targetControl;
 
@@ -73,15 +74,18 @@ namespace ArkanoidWinForms.Views
             if (buffer == null || lastWidth != width || lastHeight != height)
             {
                 buffer?.Dispose();
+                cachedGraphics?.Dispose();
+                cachedGraphics = null;
                 buffer = new Bitmap(width, height);
                 lastWidth = width;
                 lastHeight = height;
             }
 
-            buffer?.Dispose();
-            buffer = new Bitmap(width, height);
-            lastWidth = width;
-            lastHeight = height;
+            // Кэшируем графический контекст, если его нет
+            if (cachedGraphics == null && targetControl != null && !targetControl.IsDisposed)
+            {
+                cachedGraphics = targetControl.CreateGraphics();
+            }
         }
 
         /// <summary>
@@ -193,16 +197,16 @@ namespace ArkanoidWinForms.Views
             graphics.FillRectangle(pauseBgBrush, 0, 0, clientSize.Width, clientSize.Height);
             graphics.DrawString("ПАУЗА", FontResources.PauseFont, whiteBrush,
                 (clientSize.Width - graphics.MeasureString("ПАУЗА", FontResources.PauseFont).Width) / 2,
-                clientSize.Height / 2 - 30);
+                clientSize.Height / 2 - FontResources.PauseTextYOffset);
             graphics.DrawString("Нажмите ПРОБЕЛ для продолжения", FontResources.ContinueFont, yellowBrush,
                 (clientSize.Width - graphics.MeasureString("Нажмите ПРОБЕЛ для продолжения", FontResources.ContinueFont).Width) / 2,
-                clientSize.Height / 2 + 30);
+                clientSize.Height / 2 + FontResources.PauseTextYOffset);
         }
 
         private static void DrawStartScreen(Graphics graphics, Size clientSize)
         {
-            var boxWidth = 600;
-            var boxHeight = 450;
+            var boxWidth = UILayoutConstants.StartBoxWidth;
+            var boxHeight = UILayoutConstants.StartBoxHeight;
             var boxX = (clientSize.Width - boxWidth) / 2;
             var boxY = (clientSize.Height - boxHeight) / 2 - 20;
 
@@ -210,10 +214,18 @@ namespace ArkanoidWinForms.Views
             graphics.DrawRectangle(cyanPen3, boxX, boxY, boxWidth, boxHeight);
             graphics.DrawString("АРКАНОИД", FontResources.TitleFont, cyanBrush, boxX + 150, boxY + 25);
 
-            graphics.DrawString("• ЛКМ - запуск мяча", FontResources.ControlFont, whiteBrush, boxX + 50, boxY + 120);
-            graphics.DrawString("• Движение мыши - управление платформой", FontResources.ControlFont, whiteBrush, boxX + 50, boxY + 145);
-            graphics.DrawString("• Пробел - пауза / продолжить", FontResources.ControlFont, whiteBrush, boxX + 50, boxY + 170);
-            graphics.DrawString("• R - перезапуск (после победы/поражения)", FontResources.ControlFont, whiteBrush, boxX + 50, boxY + 195);
+            graphics.DrawString("• ЛКМ - запуск мяча", FontResources.ControlFont, whiteBrush,
+                boxX + UILayoutConstants.TextLeftOffset,
+                boxY + UILayoutConstants.FirstLineY);
+            graphics.DrawString("• Движение мыши - управление платформой", FontResources.ControlFont, whiteBrush,
+                boxX + UILayoutConstants.TextLeftOffset,
+                boxY + UILayoutConstants.FirstLineY + UILayoutConstants.LineSpacing);
+            graphics.DrawString("• Пробел - пауза / продолжить", FontResources.ControlFont, whiteBrush,
+                boxX + UILayoutConstants.TextLeftOffset,
+                boxY + UILayoutConstants.FirstLineY + UILayoutConstants.LineSpacing * 2);
+            graphics.DrawString("• R - перезапуск (после победы/поражения)", FontResources.ControlFont, whiteBrush,
+                boxX + UILayoutConstants.TextLeftOffset,
+                boxY + UILayoutConstants.FirstLineY + UILayoutConstants.LineSpacing * 3);
 
             var startY = boxY + 280;
             var types = new[] {
@@ -224,9 +236,9 @@ namespace ArkanoidWinForms.Views
 
             for (var i = 0; i < types.Length; i++)
             {
-                var squareX = boxX + 40;
+                var squareX = boxX + UILayoutConstants.PowerUpSquareXOffset;
                 var squareY = startY + i * 45;
-                var squareSize = 25;
+                var squareSize = UILayoutConstants.PowerUpSquareSize;
 
                 graphics.FillRectangle(types[i].Item1, squareX, squareY, squareSize, squareSize);
                 graphics.DrawRectangle(whitePen1, squareX, squareY, squareSize, squareSize);
@@ -236,7 +248,8 @@ namespace ArkanoidWinForms.Views
                 var textY = squareY + (squareSize - textSize.Height) / 2;
                 graphics.DrawString(types[i].Item2, FontResources.SymbolFont, blackBrush, textX, textY);
 
-                graphics.DrawString(types[i].Item3, FontResources.PowerFont, whiteBrush, boxX + 75, squareY + 5);
+                graphics.DrawString(types[i].Item3, FontResources.PowerFont, whiteBrush,
+                    boxX + UILayoutConstants.PowerUpTextXOffset, squareY + 5);
 
                 string additionalText = i == 0 ? "(появляется на платформе)" :
                                        i == 1 ? "(суммируется)" : "(временный эффект)";
@@ -285,11 +298,10 @@ namespace ArkanoidWinForms.Views
         /// </summary>
         public static void RefreshDisplay()
         {
-            if (targetControl != null && buffer != null && !targetControl.IsDisposed)
+            if (targetControl != null && buffer != null && !targetControl.IsDisposed && cachedGraphics != null)
             {
-                using (var graphics = targetControl.CreateGraphics())
                 {
-                    graphics.DrawImage(buffer, 0, 0);
+                    cachedGraphics.DrawImage(buffer, 0, 0);
                 }
             }
         }
@@ -313,6 +325,9 @@ namespace ArkanoidWinForms.Views
         /// </summary>
         public static void Cleanup()
         {
+            cachedGraphics?.Dispose();
+            cachedGraphics = null;
+
             buffer?.Dispose();
             buffer = null;
             targetControl = null;
