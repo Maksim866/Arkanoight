@@ -1,4 +1,4 @@
-﻿namespace ArkanoidLogic.Constants
+﻿namespace ArkanoidWinForms.Constants
 {
     /// <summary>
     /// Константы, специфичные для Windows Forms отображения

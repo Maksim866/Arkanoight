@@ -1,7 +1,7 @@
 ﻿using ArkanoidLogic.Interfaces;
 using ArkanoidLogic.Engine;
 using ArkanoidLogic.Managers;
-using ArkanoidLogic.Constants;
+using ArkanoidWinForms.Constants;
 using ArkanoidWinForms.Views;
 
 namespace ArkanoidWinForms

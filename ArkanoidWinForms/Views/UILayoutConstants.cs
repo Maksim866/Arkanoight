@@ -3,7 +3,7 @@
     /// <summary>
     /// Константы для позиционирования элементов UI
     /// </summary>
-    public static class UILayoutConstants
+    public static class UiLayoutConstants
     {
         // Отступы для текста в стартовом окне
         public const int TextLeftOffset = 50;

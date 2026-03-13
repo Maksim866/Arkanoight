@@ -205,8 +205,8 @@ namespace ArkanoidWinForms.Views
 
         private static void DrawStartScreen(Graphics graphics, Size clientSize)
         {
-            var boxWidth = UILayoutConstants.StartBoxWidth;
-            var boxHeight = UILayoutConstants.StartBoxHeight;
+            var boxWidth = UiLayoutConstants.StartBoxWidth;
+            var boxHeight = UiLayoutConstants.StartBoxHeight;
             var boxX = (clientSize.Width - boxWidth) / 2;
             var boxY = (clientSize.Height - boxHeight) / 2 - 20;
 
@@ -215,17 +215,17 @@ namespace ArkanoidWinForms.Views
             graphics.DrawString("АРКАНОИД", FontResources.TitleFont, cyanBrush, boxX + 150, boxY + 25);
 
             graphics.DrawString("• ЛКМ - запуск мяча", FontResources.ControlFont, whiteBrush,
-                boxX + UILayoutConstants.TextLeftOffset,
-                boxY + UILayoutConstants.FirstLineY);
+                boxX + UiLayoutConstants.TextLeftOffset,
+                boxY + UiLayoutConstants.FirstLineY);
             graphics.DrawString("• Движение мыши - управление платформой", FontResources.ControlFont, whiteBrush,
-                boxX + UILayoutConstants.TextLeftOffset,
-                boxY + UILayoutConstants.FirstLineY + UILayoutConstants.LineSpacing);
+                boxX + UiLayoutConstants.TextLeftOffset,
+                boxY + UiLayoutConstants.FirstLineY + UiLayoutConstants.LineSpacing);
             graphics.DrawString("• Пробел - пауза / продолжить", FontResources.ControlFont, whiteBrush,
-                boxX + UILayoutConstants.TextLeftOffset,
-                boxY + UILayoutConstants.FirstLineY + UILayoutConstants.LineSpacing * 2);
+                boxX + UiLayoutConstants.TextLeftOffset,
+                boxY + UiLayoutConstants.FirstLineY + UiLayoutConstants.LineSpacing * 2);
             graphics.DrawString("• R - перезапуск (после победы/поражения)", FontResources.ControlFont, whiteBrush,
-                boxX + UILayoutConstants.TextLeftOffset,
-                boxY + UILayoutConstants.FirstLineY + UILayoutConstants.LineSpacing * 3);
+                boxX + UiLayoutConstants.TextLeftOffset,
+                boxY + UiLayoutConstants.FirstLineY + UiLayoutConstants.LineSpacing * 3);
 
             var startY = boxY + 280;
             var types = new[] {
@@ -236,9 +236,9 @@ namespace ArkanoidWinForms.Views
 
             for (var i = 0; i < types.Length; i++)
             {
-                var squareX = boxX + UILayoutConstants.PowerUpSquareXOffset;
+                var squareX = boxX + UiLayoutConstants.PowerUpSquareXOffset;
                 var squareY = startY + i * 45;
-                var squareSize = UILayoutConstants.PowerUpSquareSize;
+                var squareSize = UiLayoutConstants.PowerUpSquareSize;
 
                 graphics.FillRectangle(types[i].Item1, squareX, squareY, squareSize, squareSize);
                 graphics.DrawRectangle(whitePen1, squareX, squareY, squareSize, squareSize);
@@ -249,7 +249,7 @@ namespace ArkanoidWinForms.Views
                 graphics.DrawString(types[i].Item2, FontResources.SymbolFont, blackBrush, textX, textY);
 
                 graphics.DrawString(types[i].Item3, FontResources.PowerFont, whiteBrush,
-                    boxX + UILayoutConstants.PowerUpTextXOffset, squareY + 5);
+                    boxX + UiLayoutConstants.PowerUpTextXOffset, squareY + 5);
 
                 string additionalText = i == 0 ? "(появляется на платформе)" :
                                        i == 1 ? "(суммируется)" : "(временный эффект)";
