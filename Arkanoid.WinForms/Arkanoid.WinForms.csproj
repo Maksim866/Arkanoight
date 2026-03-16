@@ -7,5 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
+	<ItemGroup>
+		<ProjectReference Include="..\Arkanoid.Logic\Arkanoid.Logic.csproj" />
+	</ItemGroup>
 </Project>

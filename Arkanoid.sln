@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11520.95
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arkanoid.Logic", "Arkanoid.Logic\Arkanoid.Logic.csproj", "{924AE5C1-F080-0B2A-B411-B41F16F1A8DC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arkanoid.WinForms", "Arkanoid.WinForms\Arkanoid.WinForms.csproj", "{34E0B3EC-36B2-8227-892B-C851D80971DC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{924AE5C1-F080-0B2A-B411-B41F16F1A8DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{924AE5C1-F080-0B2A-B411-B41F16F1A8DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{924AE5C1-F080-0B2A-B411-B41F16F1A8DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{924AE5C1-F080-0B2A-B411-B41F16F1A8DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34E0B3EC-36B2-8227-892B-C851D80971DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34E0B3EC-36B2-8227-892B-C851D80971DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34E0B3EC-36B2-8227-892B-C851D80971DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34E0B3EC-36B2-8227-892B-C851D80971DC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ED17FB49-E1C9-4DCC-92F1-2C0A5FD7AF5A}
+	EndGlobalSection
+EndGlobal
