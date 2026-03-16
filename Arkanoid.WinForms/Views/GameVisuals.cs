@@ -1,6 +1,6 @@
 ﻿using Arkanoid.Logic.Interfaces;
 using Arkanoid.Logic.Enums;
-using Arkanoid.Logic.Managers;
+using Arkanoid.Logic.Manager;
 
 namespace Arkanoid.WinForms.Views
 {

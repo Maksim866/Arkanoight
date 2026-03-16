@@ -1,6 +1,6 @@
 ﻿using Arkanoid.Logic.Interfaces;
 using Arkanoid.Logic.Engine;
-using Arkanoid.Logic.Managers;
+using Arkanoid.Logic.Manager;
 using Arkanoid.WinForms.Constants;
 using Arkanoid.WinForms.Views;
 
